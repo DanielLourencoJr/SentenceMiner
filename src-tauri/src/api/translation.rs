@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::prompts;
+use super::{prompts, response_parser};
 
 #[derive(Serialize)]
 struct ChatRequest {
@@ -85,5 +85,5 @@ pub async fn generate_back(
         .map(|c| c.message.content.trim().to_string())
         .ok_or_else(|| "Resposta vazia da API.".to_string())?;
 
-    Ok(content)
+    response_parser::parse_and_normalize_back(card_model, &content)
 }
