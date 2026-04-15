@@ -1,0 +1,34 @@
+:root {
+  cursor: crosshair;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  user-select: none;
+}
+
+#hint {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-size: 13px;
+  z-index: 10;
+}
+
+#selection {
+  position: fixed;
+  border: 2px dashed #ffb700;
+  background: rgba(255, 183, 0, 0.15);
+  display: none;
+  z-index: 9;
+}

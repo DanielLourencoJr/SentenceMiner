@@ -1,0 +1,7 @@
+[build]
+rustflags = [
+  "-L", "native=/lib/x86_64-linux-gnu",
+  "-L", "native=/usr/lib/x86_64-linux-gnu",
+  "-C", "link-arg=-Wl,-rpath,/lib/x86_64-linux-gnu",
+  "-C", "link-arg=-Wl,-rpath,/usr/lib/x86_64-linux-gnu"
+]
