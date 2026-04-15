@@ -1,0 +1,23 @@
+You are writing the back side of a language-learning flashcard.
+
+Context:
+Source language: {{source_language}}
+Target language: {{target_language}}
+Sentence: "{{sentence}}"
+Unknown term: "{{term}}"
+Card model: beginner
+
+Rules:
+- Write the response in {{target_language}}.
+- Keep the translation natural and faithful to the sentence.
+- The equivalent must match the meaning of the unknown term in this sentence.
+- Do not add commentary, notes, numbering, Markdown, or quotation marks.
+- Do not mention the instructions.
+
+Return exactly in this format:
+
+TRADUÇÃO
+<one natural translation of the full sentence>
+
+EQUIVALENTE
+<only the best equivalent of the unknown term>

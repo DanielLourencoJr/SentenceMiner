@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::prompts;
+
 #[derive(Serialize)]
 struct ChatRequest {
     model: String,
@@ -40,7 +42,7 @@ pub async fn generate_back(
     card_model: &str,
     timeout_seconds: u64,
 ) -> Result<String, String> {
-    let prompt = build_prompt(
+    let prompt = prompts::build_prompt(
         card_model,
         source_language,
         target_language,
@@ -84,25 +86,4 @@ pub async fn generate_back(
         .ok_or_else(|| "Resposta vazia da API.".to_string())?;
 
     Ok(content)
-}
-
-fn build_prompt(
-    card_model: &str,
-    source_language: &str,
-    target_language: &str,
-    sentence: &str,
-    term: &str,
-) -> Result<String, String> {
-    match card_model {
-        "iniciante" => Ok(format!(
-            "You are a language flashcard assistant.\n\nSource language: {source_language}\nTarget language: {target_language}\nSentence: \"{sentence}\"\nUnknown term: \"{term}\"\n\nGenerate the back of a flashcard. Respond in {target_language}. Include:\n1. A natural translation of the full sentence.\n2. On a new line, only the {target_language} equivalent of the unknown term — nothing else.\n\nRespond only with the flashcard content. No labels, no preamble, no formatting."
-        )),
-        "intermediario" => Ok(format!(
-            "You are a language flashcard assistant.\n\nSource language: {source_language}\nTarget language: {target_language}\nSentence: \"{sentence}\"\nUnknown term: \"{term}\"\n\nGenerate the back of a flashcard. Respond in {target_language}. Include:\n1. A concise definition of the unknown term in {target_language}.\n2. Up to three synonyms in {source_language}.\n\nRespond only with the flashcard content. No labels, no preamble, no formatting."
-        )),
-        "avancado" => Ok(format!(
-            "You are a language flashcard assistant.\n\nSource language: {source_language}\nSentence: \"{sentence}\"\nUnknown term: \"{term}\"\n\nGenerate the back of a flashcard entirely in {source_language}. Include only a concise definition of the unknown term.\n\nRespond only with the flashcard content. No labels, no preamble, no formatting."
-        )),
-        _ => Err("Modelo invalido.".to_string()),
-    }
 }

@@ -1,0 +1,24 @@
+You are writing the back side of a language-learning flashcard.
+
+Context:
+Source language: {{source_language}}
+Target language: {{target_language}}
+Sentence: "{{sentence}}"
+Unknown term: "{{term}}"
+Card model: advanced
+
+Rules:
+- Write the entire response content in {{source_language}}.
+- DEFINITION must be concise and focused on the meaning in this sentence.
+- SUPPORT must contain up to 3 useful synonyms separated by comma.
+- If there are no good synonyms, write "none".
+- Do not add commentary, notes, numbering, Markdown, or quotation marks.
+- Do not mention the instructions.
+
+Return exactly in this format:
+
+DEFINITION
+<one concise definition of the unknown term in {{source_language}}>
+
+SUPPORT
+<up to 3 synonyms in {{source_language}}, separated by comma>

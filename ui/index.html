@@ -8,51 +8,111 @@
   </head>
   <body>
     <main class="app">
-      <h1>SentenceMiner</h1>
-      <p class="subtitle">Teste de captura de selecao (Fase 1)</p>
-      <div class="controls">
-        <button id="btn-capture-text">Capturar selecao</button>
-        <button id="btn-capture-ocr">OCR ultimo print</button>
-      </div>
-      <div class="controls">
-        <label class="label" for="anki-model">Note type:</label>
-        <select id="anki-model"></select>
-        <label class="label" for="anki-deck">Baralho:</label>
-        <select id="anki-deck"></select>
-      </div>
-      <div id="status" class="status">Status: iniciando...</div>
+      <header class="app-header">
+        <div>
+          <h1>SentenceMiner</h1>
+          <p class="subtitle">Captura, geração e envio ao Anki com o menor atrito possível.</p>
+        </div>
+        <div id="status" class="status">Status: iniciando...</div>
+      </header>
 
-      <div class="section">
-        <label class="label" for="sentence">Frente (frase)</label>
-        <textarea id="sentence" class="output" aria-live="polite" placeholder="Frase capturada aparece aqui..."></textarea>
-      </div>
+      <section class="workspace">
+        <section class="panel preview-panel">
+          <div class="panel-heading">
+            <p class="eyebrow">Preview editável</p>
+            <h2>Como o card vai ficar</h2>
+          </div>
 
-      <div class="section">
-        <label class="label" for="term">Termo desconhecido</label>
-        <input id="term" class="text-input" placeholder="Digite o termo..." />
-      </div>
+          <article class="card-preview">
+            <div class="card-face">
+              <div class="face-header">
+                <span class="face-title">Frente</span>
+                <span class="face-caption">Editável</span>
+              </div>
+              <div
+                id="front-preview"
+                class="card-surface"
+                contenteditable="true"
+                spellcheck="false"
+                data-placeholder="A frente formatada aparece aqui."
+              ></div>
+            </div>
 
-      <div class="controls">
-        <label class="label" for="card-model">Modelo:</label>
-        <select id="card-model">
-          <option value="iniciante">Iniciante</option>
-          <option value="intermediario" selected>Intermediario</option>
-          <option value="avancado">Avancado</option>
-        </select>
-        <label class="label" for="format-preset">Preset:</label>
-        <select id="format-preset"></select>
-        <button id="btn-generate">Gerar verso</button>
-      </div>
+            <div class="card-face">
+              <div class="face-header">
+                <span class="face-title">Verso</span>
+                <span class="face-caption">Editável</span>
+              </div>
+              <div
+                id="back-preview"
+                class="card-surface"
+                contenteditable="true"
+                spellcheck="false"
+                data-placeholder="O verso gerado aparece aqui."
+              ></div>
+            </div>
+          </article>
+        </section>
 
-      <div class="section">
-        <label class="label" for="back">Verso</label>
-        <textarea id="back" class="output" placeholder="Verso gerado aparece aqui..."></textarea>
-      </div>
+        <section class="panel controls-panel">
+          <div class="panel-heading">
+            <p class="eyebrow">Operação</p>
+            <h2>Controles do fluxo</h2>
+          </div>
 
-      <div class="controls">
-        <button id="btn-add-anki">Adicionar ao Anki</button>
-      </div>
+          <div class="control-group button-row">
+            <button id="btn-capture-text">Capturar seleção</button>
+            <button id="btn-capture-ocr">OCR último print</button>
+          </div>
+
+          <div class="control-grid">
+            <div class="field">
+              <label class="label" for="card-model">Modelo</label>
+              <select id="card-model">
+                <option value="iniciante">Iniciante</option>
+                <option value="intermediario" selected>Intermediário</option>
+                <option value="avancado">Avançado</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="format-preset">Preset</label>
+              <select id="format-preset"></select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="anki-model">Note type</label>
+              <select id="anki-model"></select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="anki-deck">Baralho</label>
+              <select id="anki-deck"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="sentence">Frase base</label>
+            <textarea
+              id="sentence"
+              class="text-area"
+              aria-live="polite"
+              placeholder="Frase capturada aparece aqui..."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label class="label" for="term">Termo desconhecido</label>
+            <input id="term" class="text-input" placeholder="Digite o termo..." />
+          </div>
+
+          <div class="action-stack">
+            <button id="btn-generate" class="primary-action">Gerar verso</button>
+            <button id="btn-add-anki">Adicionar ao Anki</button>
+          </div>
+        </section>
+      </section>
     </main>
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
   </body>
 </html>
