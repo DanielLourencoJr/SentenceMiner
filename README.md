@@ -30,7 +30,7 @@ Estas ideias aparecem na especificação, mas não representam o comportamento a
 - modo de edição com retokenização;
 - OCR por seleção de região desenhada na tela;
 - fallback automático para OCR quando não houver seleção;
-- fluxo I+1 automatizado.
+- gerenciamento de vocabulário conhecido.
 
 Existe código inicial de overlay em `ui/overlay.*`, mas ele não está integrado ao backend atual.
 
