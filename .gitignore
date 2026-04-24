@@ -2,3 +2,4 @@ src-tauri/target/
 target/
 .DS_Store
 *.log
+bug.md
