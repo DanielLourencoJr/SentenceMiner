@@ -23,11 +23,16 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.10.3", features = [] }
 tauri-plugin-log = "2"
-tauri-plugin-global-shortcut = "2"
 toml = "0.8"
 arboard = "3"
 leptess = "0.5"
 screenshots = "0.8"
 image = "0.24"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "full"] }
+ashpd = { version = "0.10", features = ["tokio"] }
+futures-lite = "2"
+
+[dev-dependencies]
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }

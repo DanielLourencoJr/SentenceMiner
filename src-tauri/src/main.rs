@@ -2,11 +2,10 @@ mod api;
 mod anki;
 mod capture;
 mod config;
+mod shortcut;
 
 use serde::Serialize;
-use tauri::{Emitter, Manager};
-use std::str::FromStr;
-use tauri_plugin_global_shortcut::{Shortcut, ShortcutState};
+use tauri::Manager;
 
 #[tauri::command]
 async fn capture_selection() -> Result<String, String> {
@@ -127,6 +126,7 @@ struct CaptureResultPayload {
     text: Option<String>,
     error: Option<String>,
 }
+
 fn main() {
     let config = match config::load_or_create() {
         Ok(cfg) => cfg,
@@ -150,55 +150,15 @@ fn main() {
             get_ui_bootstrap
         ])
         .setup(|app| {
-            let hotkey = app.state::<config::Config>().capture.hotkey.clone();
-            let shortcut = Shortcut::from_str(&hotkey).map_err(|e| e.to_string())?;
             let handle = app.handle().clone();
-            if let Ok(session) = std::env::var("XDG_SESSION_TYPE") {
-                if session.to_lowercase() == "wayland" {
-                    let _ = handle.emit(
-                        "hotkey_warning",
-                        "Atalhos globais podem nao funcionar no Wayland. Tente uma sessao X11.",
-                    );
-                }
-            }
-            let plugin = tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcuts([shortcut])?
-                .with_handler(|app_handle, _shortcut, event| {
-                    let _ = app_handle.emit("hotkey_triggered", format!("{:?}", event.state));
-                    if event.state != ShortcutState::Pressed {
-                        return;
-                    }
-                    let _ = app_handle.emit("hotkey_triggered", "Pressed");
-                    let _ = app_handle.emit("capture_selection_started", ());
-                    let app_handle = app_handle.clone();
-                    tauri::async_runtime::spawn(async move {
-                        let text = tauri::async_runtime::spawn_blocking(|| {
-                            capture::selection::read_primary_selection()
-                        })
-                        .await
-                        .map_err(|e| e.to_string())
-                        .and_then(|r| r);
+            let config = app.state::<config::Config>().inner().clone();
 
-                        let payload = match text {
-                            Ok(t) if !t.trim().is_empty() => CaptureResultPayload {
-                                text: Some(t),
-                                error: None,
-                            },
-                            Ok(_) => CaptureResultPayload {
-                                text: None,
-                                error: Some("Nenhuma selecao detectada.".to_string()),
-                            },
-                            Err(err) => CaptureResultPayload {
-                                text: None,
-                                error: Some(err),
-                            },
-                        };
-                        let _ = app_handle.emit("capture_selection_result", payload);
-                    });
-                })
-                .build();
-            handle.plugin(plugin)?;
-            let _ = handle.emit("hotkey_registered", hotkey);
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = shortcut::init_shortcuts(handle, &config).await {
+                    eprintln!("Shortcut init error: {}", e);
+                }
+            });
+
             Ok(())
         })
         .run(tauri::generate_context!())
