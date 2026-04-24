@@ -53,7 +53,30 @@ function registerDomEvents() {
 
   elements.sentence.addEventListener("input", updateFrontPreview);
   elements.term.addEventListener("input", updateFrontPreview);
+  elements.term.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleAddAnkiClick();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      handleGenerateClick();
+    }
+  });
   elements.preset.addEventListener("change", updateFrontPreview);
+
+  const textInputs = [
+    elements.sentence,
+    elements.frontPreview,
+    elements.backPreview,
+  ];
+  textInputs.forEach((input) => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleAddAnkiClick();
+      }
+    });
+  });
 }
 
 async function initializeApp() {
@@ -221,6 +244,7 @@ async function handleCaptureSelectionClick() {
     }
 
     applyCapturedSentence(text, "Seleção capturada.");
+    elements.term.focus();
   } catch (err) {
     setStatus(elements.status, String(err));
   } finally {
@@ -240,6 +264,7 @@ async function handleCaptureOcrClick() {
 
     const ocrText = await invokeCommand("capture_ocr_last_screenshot");
     applyCapturedSentence(ocrText, "OCR concluído.");
+    elements.term.focus();
   } catch (err) {
     setStatus(elements.status, String(err));
   } finally {
