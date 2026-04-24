@@ -46,6 +46,12 @@ pub struct CaptureConfig {
 pub struct UiConfig {
     pub default_model: String,
     pub default_format_preset: String,
+    #[serde(default = "default_theme")]
+    pub theme: String,
+}
+
+fn default_theme() -> String {
+    "light".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,6 +86,7 @@ impl Default for Config {
             ui: UiConfig {
                 default_model: "intermediario".to_string(),
                 default_format_preset: "negrito".to_string(),
+                theme: "light".to_string(),
             },
             format_presets: vec![
                 FormatPreset {

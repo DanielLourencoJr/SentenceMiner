@@ -27,11 +27,13 @@ const elements = {
   preset: document.getElementById("format-preset"),
   btnAddAnki: document.getElementById("btn-add-anki"),
   btnGenerate: document.getElementById("btn-generate"),
+  btnThemeToggle: document.getElementById("btn-theme-toggle"),
 };
 
 const state = {
   formatPresets: [],
   defaultDeck: "",
+  theme: "light",
 };
 
 const busyButtons = [
@@ -50,6 +52,7 @@ function registerDomEvents() {
   elements.btnCaptureOcr.addEventListener("click", handleCaptureOcrClick);
   elements.btnGenerate.addEventListener("click", handleGenerateClick);
   elements.btnAddAnki.addEventListener("click", handleAddAnkiClick);
+  elements.btnThemeToggle.addEventListener("click", handleThemeToggle);
 
   elements.sentence.addEventListener("input", updateFrontPreview);
   elements.term.addEventListener("input", updateFrontPreview);
@@ -150,6 +153,25 @@ function ensureTauri() {
   return false;
 }
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  elements.btnThemeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+}
+
+async function handleThemeToggle() {
+  const newTheme = state.theme === "light" ? "dark" : "light";
+  state.theme = newTheme;
+  applyTheme(newTheme);
+
+  if (hasTauri()) {
+    try {
+      await invokeCommand("set_theme", { theme: newTheme });
+    } catch (err) {
+      setStatus(elements.status, `Erro ao salvar tema: ${String(err)}`);
+    }
+  }
+}
+
 function resetCapturedContent() {
   elements.sentence.value = "";
   elements.term.value = "";
@@ -179,6 +201,7 @@ async function loadUiBootstrap() {
     const bootstrap = await invokeCommand("get_ui_bootstrap");
     state.formatPresets = bootstrap.format_presets || [];
     state.defaultDeck = bootstrap.default_deck || "";
+    state.theme = bootstrap.theme || "light";
 
     populatePresetSelect(elements.preset, state.formatPresets);
 
@@ -190,6 +213,7 @@ async function loadUiBootstrap() {
       elements.cardModel.value = bootstrap.default_model;
     }
 
+    applyTheme(state.theme);
     updateFrontPreview();
     setStatus(elements.status, "Presets carregados.");
   } catch (err) {

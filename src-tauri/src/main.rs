@@ -109,6 +109,7 @@ struct UiBootstrap {
     default_format_preset: String,
     default_deck: String,
     format_presets: Vec<config::FormatPreset>,
+    theme: String,
 }
 
 #[tauri::command]
@@ -118,7 +119,15 @@ fn get_ui_bootstrap(state: tauri::State<'_, config::Config>) -> UiBootstrap {
         default_format_preset: state.ui.default_format_preset.clone(),
         default_deck: state.anki.deck.clone(),
         format_presets: state.format_presets.clone(),
+        theme: state.ui.theme.clone(),
     }
+}
+
+#[tauri::command]
+fn set_theme(theme: String, state: tauri::State<'_, config::Config>) -> Result<(), String> {
+    let mut config = state.inner().clone();
+    config.ui.theme = theme;
+    config::save(&config)
 }
 
 #[derive(Clone, Serialize)]
@@ -147,7 +156,8 @@ fn main() {
             anki_get_model_field_names,
             anki_add_note,
             generate_back,
-            get_ui_bootstrap
+            get_ui_bootstrap,
+            set_theme
         ])
         .setup(|app| {
             let handle = app.handle().clone();
