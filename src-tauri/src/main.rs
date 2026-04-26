@@ -2,10 +2,8 @@ mod api;
 mod anki;
 mod capture;
 mod config;
-mod shortcut;
 
 use serde::Serialize;
-use tauri::Manager;
 
 #[tauri::command]
 async fn capture_selection() -> Result<String, String> {
@@ -159,18 +157,6 @@ fn main() {
             get_ui_bootstrap,
             set_theme
         ])
-        .setup(|app| {
-            let handle = app.handle().clone();
-            let config = app.state::<config::Config>().inner().clone();
-
-            tauri::async_runtime::spawn(async move {
-                if let Err(e) = shortcut::init_shortcuts(handle, &config).await {
-                    eprintln!("Shortcut init error: {}", e);
-                }
-            });
-
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));
 }

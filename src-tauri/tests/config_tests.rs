@@ -3,18 +3,6 @@ mod config_tests {
     use app_lib::config::Config;
 
     #[test]
-    fn default_hotkey_is_ctrl_shift_s() {
-        let config = Config::default();
-        assert_eq!(config.capture.hotkey, "ctrl+shift+s");
-    }
-
-    #[test]
-    fn default_ocr_language_is_eng() {
-        let config = Config::default();
-        assert_eq!(config.capture.ocr_language, "eng");
-    }
-
-    #[test]
     fn default_source_language_is_english() {
         let config = Config::default();
         assert_eq!(config.general.source_language, "English");
@@ -111,102 +99,15 @@ mod config_tests {
     }
 
     #[test]
-    fn config_serialize_with_hotkey() {
-        let config = Config::default();
-        let toml_str = toml::to_string(&config).expect("should serialize");
-        assert!(toml_str.contains("hotkey"));
-    }
-
-    #[test]
-    fn config_deserialize_with_custom_hotkey() {
-        let toml_str = r#"
-[general]
-source_language = "English"
-target_language = "Portuguese"
-
-[anki]
-host = "192.168.1.100"
-port = 8765
-deck = "MyDeck"
-tags = ["test"]
-
-[api]
-base_url = "https://api.example.com"
-api_key = "secret"
-model = "gpt-4"
-timeout_seconds = 30
-
-[capture]
-hotkey = "ctrl+shift+x"
-ocr_language = "por"
-
-[ui]
-default_model = "avancado"
-default_format_preset = "laranja"
-
-[[format_presets]]
-name = "custom"
-template = "<mark>{term}</mark>"
-"#;
-        let config: Config = toml::from_str(toml_str).expect("should deserialize");
-        assert_eq!(config.capture.hotkey, "ctrl+shift+x");
-        assert_eq!(config.capture.ocr_language, "por");
-        assert_eq!(config.ui.default_model, "avancado");
-    }
-
-    #[test]
-    fn config_deserialize_with_empty_hotkey_uses_default() {
-        let toml_str = r#"
-[general]
-source_language = "English"
-target_language = "Portuguese"
-
-[anki]
-host = "localhost"
-port = 8765
-deck = "Default"
-tags = []
-
-[api]
-base_url = "https://api.example.com"
-api_key = ""
-model = "model"
-timeout_seconds = 10
-
-[capture]
-hotkey = ""
-ocr_language = "eng"
-
-[ui]
-default_model = "iniciante"
-default_format_preset = "negrito"
-
-[[format_presets]]
-name = "test"
-template = "{term}"
-"#;
-        let config: Config = toml::from_str(toml_str).expect("should deserialize");
-        assert_eq!(config.capture.hotkey, "");
-    }
-
-    #[test]
     fn config_roundtrip_preserves_all_fields() {
         let original = Config::default();
         let serialized = toml::to_string_pretty(&original).expect("serialize");
         let deserialized: Config = toml::from_str(&serialized).expect("deserialize");
         
-        assert_eq!(original.capture.hotkey, deserialized.capture.hotkey);
-        assert_eq!(original.capture.ocr_language, deserialized.capture.ocr_language);
         assert_eq!(original.general.source_language, deserialized.general.source_language);
         assert_eq!(original.anki.host, deserialized.anki.host);
         assert_eq!(original.anki.port, deserialized.anki.port);
-    }
-
-    #[test]
-    fn capture_config_implements_default() {
-        let config = Config::default();
-        assert!(!config.capture.hotkey.is_empty());
-        assert!(!config.capture.ocr_language.is_empty());
+        assert_eq!(original.ui.default_model, deserialized.ui.default_model);
     }
 
     #[test]

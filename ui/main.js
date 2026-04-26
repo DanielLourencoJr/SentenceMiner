@@ -108,27 +108,6 @@ function registerTauriEvents() {
     setStatus(elements.status, "Capturando seleção...");
   });
 
-  listenEvent("hotkey_registered", (event) => {
-    const hotkey = event && event.payload ? event.payload : "";
-    if (hotkey) {
-      setStatus(elements.status, `Hotkey ativa: ${hotkey}`);
-    }
-  });
-
-  listenEvent("hotkey_warning", (event) => {
-    if (event && event.payload) {
-      setStatus(elements.status, String(event.payload));
-    }
-  });
-
-  listenEvent("hotkey_triggered", (event) => {
-    const stateText = event && event.payload ? event.payload : "";
-    setStatus(
-      elements.status,
-      `Hotkey acionada${stateText ? ` (${stateText})` : ""}.`
-    );
-  });
-
   listenEvent("capture_selection_result", (event) => {
     const payload = event ? event.payload : null;
 

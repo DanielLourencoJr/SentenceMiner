@@ -38,7 +38,6 @@ pub struct ApiConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureConfig {
-    pub hotkey: String,
     pub ocr_language: String,
 }
 
@@ -80,7 +79,6 @@ impl Default for Config {
                 timeout_seconds: 15,
             },
             capture: CaptureConfig {
-                hotkey: "ctrl+shift+s".to_string(),
                 ocr_language: "eng".to_string(),
             },
             ui: UiConfig {
