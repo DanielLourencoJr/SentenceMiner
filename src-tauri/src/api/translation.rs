@@ -31,6 +31,22 @@ struct ChatMessageResponse {
     content: String,
 }
 
+fn build_chat_request(model: &str, prompt: &str) -> ChatRequest {
+    ChatRequest {
+        model: model.to_string(),
+        messages: vec![ChatMessage {
+            role: "user".to_string(),
+            content: prompt.to_string(),
+        }],
+        temperature: 0.3,
+        max_tokens: 300,
+    }
+}
+
+fn build_url(base_url: &str) -> String {
+    format!("{}/chat/completions", base_url.trim_end_matches('/'))
+}
+
 pub async fn generate_back(
     base_url: &str,
     api_key: &str,
@@ -50,22 +66,14 @@ pub async fn generate_back(
         term,
     )?;
 
-    let req = ChatRequest {
-        model: model.to_string(),
-        messages: vec![ChatMessage {
-            role: "user".to_string(),
-            content: prompt,
-        }],
-        temperature: 0.3,
-        max_tokens: 300,
-    };
+    let req = build_chat_request(model, &prompt);
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(timeout_seconds))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let url = format!("{}/chat/completions", base_url.trim_end_matches('/'));
+    let url = build_url(base_url);
     let resp = client
         .post(url)
         .bearer_auth(api_key)
@@ -86,4 +94,56 @@ pub async fn generate_back(
         .ok_or_else(|| "Resposta vazia da API.".to_string())?;
 
     response_parser::parse_and_normalize_back(card_model, &content)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn builds_correct_request_payload() {
+        let prompt = "Test prompt for translation";
+        let req = build_chat_request("llama3-70b-8192", prompt);
+
+        assert_eq!(req.model, "llama3-70b-8192");
+        assert_eq!(req.messages.len(), 1);
+        assert_eq!(req.messages[0].role, "user");
+        assert_eq!(req.messages[0].content, prompt);
+        assert_eq!(req.temperature, 0.3);
+        assert_eq!(req.max_tokens, 300);
+    }
+
+    #[test]
+    fn builds_request_with_different_model() {
+        let req = build_chat_request("gpt-4", "Some prompt");
+
+        assert_eq!(req.model, "gpt-4");
+        assert_eq!(req.messages[0].content, "Some prompt");
+    }
+
+    #[test]
+    fn request_has_single_user_message() {
+        let req = build_chat_request("model", "prompt");
+
+        assert_eq!(req.messages.len(), 1);
+        assert_eq!(req.messages[0].role, "user");
+    }
+
+    #[test]
+    fn url_without_trailing_slash() {
+        let url = build_url("https://api.groq.com/openai/v1");
+        assert_eq!(url, "https://api.groq.com/openai/v1/chat/completions");
+    }
+
+    #[test]
+    fn url_with_trailing_slash() {
+        let url = build_url("https://api.groq.com/openai/v1/");
+        assert_eq!(url, "https://api.groq.com/openai/v1/chat/completions");
+    }
+
+    #[test]
+    fn url_with_long_base_url() {
+        let url = build_url("https://custom-api.example.com/v1/openai");
+        assert_eq!(url, "https://custom-api.example.com/v1/openai/chat/completions");
+    }
 }

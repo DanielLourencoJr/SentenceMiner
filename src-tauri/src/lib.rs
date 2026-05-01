@@ -1,5 +1,7 @@
 pub mod config;
 pub mod capture;
+pub mod api;
+pub mod anki;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
