@@ -2,7 +2,10 @@
 mod config_tests {
     use app_lib::config::{self, Config};
     use std::fs;
+    use std::sync::Mutex;
     use tempfile::tempdir;
+
+    static HOME_LOCK: Mutex<()> = Mutex::new(());
 
     // ─── Default value tests ──────────────────────────────────────────
 
@@ -136,6 +139,7 @@ mod config_tests {
     where
         F: FnOnce(&std::path::Path),
     {
+        let _guard = HOME_LOCK.lock().unwrap();
         let dir = tempdir().expect("create temp dir");
         let home = dir.path().to_str().expect("valid utf-8").to_string();
         let old_home = std::env::var("HOME").ok();

@@ -55,6 +55,9 @@ fn is_image_file(path: &Path) -> bool {
 mod tests {
     use super::{is_image_file, latest_image_file, screenshots_dir};
     use std::path::Path;
+    use std::sync::Mutex;
+
+    static HOME_LOCK: Mutex<()> = Mutex::new(());
 
     // ─── is_image_file ────────────────────────────────────────────────
 
@@ -112,16 +115,28 @@ mod tests {
 
     #[test]
     fn screenshots_dir_uses_home() {
+        let _guard = HOME_LOCK.lock().unwrap();
+        let old_home = std::env::var("HOME").ok();
         std::env::set_var("HOME", "/tmp/test-home");
         let dir = screenshots_dir().expect("screenshots dir");
         assert_eq!(dir, Path::new("/tmp/test-home/Pictures/Screenshots"));
+        match old_home {
+            Some(val) => std::env::set_var("HOME", val),
+            None => std::env::remove_var("HOME"),
+        }
     }
 
     #[test]
     fn screenshots_dir_fails_without_home() {
+        let _guard = HOME_LOCK.lock().unwrap();
+        let old_home = std::env::var("HOME").ok();
         std::env::remove_var("HOME");
         let err = screenshots_dir().expect_err("should fail");
         assert!(err.contains("not found"));
+        match old_home {
+            Some(val) => std::env::set_var("HOME", val),
+            None => std::env::remove_var("HOME"),
+        }
     }
 
     // ─── latest_image_file ────────────────────────────────────────────
