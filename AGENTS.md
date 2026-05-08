@@ -1,50 +1,53 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- `src-tauri/`: Rust backend (Tauri v2). Main entry: `src-tauri/src/main.rs`.
-- `src-tauri/src/`: backend modules (`config.rs`, `capture/`, `api/`, `anki/`).
-- `ui/`: frontend HTML/CSS/JS (`index.html`, `style.css`, `main.js`).
-- `dev_server.py`: no-cache dev server for UI during development.
-- `legacy-root/`: old root Rust project kept for reference (not used by Tauri).
-- Spec reference: `SentenceMiner_Spec.md`.
+## Project Structure
+- `src-tauri/`: Rust backend (Tauri v2). Entry: `src-tauri/src/main.rs`. Lib: `src/lib.rs`.
+- `ui/`: frontend HTML/CSS/JS vanilla (no frameworks). Dev server: `python3 dev_server.py` (serves `ui/` at `http://localhost:1420`).
+- `SentenceMiner_Spec.md`: full spec reference for card models, API format, config schema.
+- `legacy-root/`: old project kept for reference, not used by Tauri build.
 
-## Build, Test, and Development Commands
-- Run UI dev server: `python3 dev_server.py` (serves at `http://localhost:1420`)
-- Run app: `cargo tauri dev` (from repo root)
-- If `/tmp` is small, set:
-  `export TMPDIR=/media/<disk>/tmp`
-  `export CARGO_TARGET_DIR=/media/<disk>/sentenceminer-target`
+## Build and Run
+```bash
+# Production binary
+cd src-tauri && cargo tauri build
 
-## Coding Style & Naming Conventions
-- Rust 2021 edition.
-- Prefer explicit, simple code; avoid `unwrap()` in production paths.
-- Use `Result` and propagate errors with `?` where possible.
-- Frontend is vanilla HTML/CSS/JS (no frameworks).
-- Naming: snake_case for Rust functions/modules; kebab-case IDs in HTML are acceptable and already used.
+# Development with hot-reload webview
+cargo tauri dev
+```
 
-## Testing Guidelines
-- Rust tests: `cd src-tauri && cargo test` (unit + integration)
-- Rust unit tests only: `cd src-tauri && cargo test --lib`
-- JS frontend tests: `npm test` (from repo root)
-- Tests in: `src-tauri/tests/config_tests.rs`, `src-tauri/tests/anki_client_tests.rs`, `src-tauri/tests/translation_tests.rs`, `__tests__/`
-- Manual checks:
-  - Selection capture and OCR.
-  - AnkiConnect addNote.
-  - API “Gerar verso”.
+If `/tmp` is small:
+```bash
+export TMPDIR=/media/<disk>/tmp
+export CARGO_TARGET_DIR=/media/<disk>/sentenceminer-target
+```
 
-## Commit & Pull Request Guidelines
-- No formal conventions found in history yet.
-- For future changes:
-  - Use short, imperative commit messages (e.g., “Add OCR flow”).
-  - PRs should describe user-visible changes and include screenshots for UI updates.
+## Test Commands
+```bash
+# Rust: 190 tests (unit + integration)
+cd src-tauri && cargo test
+cd src-tauri && cargo test --lib           # unit only
 
-## Configuration & Runtime Notes
-- User config: `~/.config/sentenceminer/config.toml`.
-- AnkiConnect must be running locally (`http://localhost:8765`).
-- OCR relies on Tesseract/Leptonica system libs.
-- System deps (Ubuntu): `tesseract-ocr libtesseract-dev libleptonica-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev`
+# JS: 61 tests (vitest, from repo root)
+npm test
+```
+
+## Testing Quirks
+- **Config/OCR tests that modify `$HOME`** use a `HOME_LOCK: Mutex<()>` to prevent env var races. If adding new tests that set `$HOME`, acquire `HOME_LOCK` and save/restore the old value.
+- Config tests with `with_temp_home` helper create a temp dir and set `$HOME` to it — already behind the mutex.
+
+## Build Quirks
+- Tauri `frontendDist` = `"../ui"` (points to the `ui/` directory). `node_modules/` must **never** exist inside `ui/` or `cargo tauri build` fails.
+- JS test infra (`package.json`, `vitest.config.js`, `__tests__/`) lives at project root to keep `ui/` clean.
+
+## Configuration & Runtime Dependencies
+- User config: `~/.config/sentenceminer/config.toml` (TOML, auto-created with defaults).
+- AnkiConnect must run at `http://localhost:8765`.
+- API defaults to Groq (`llama3-70b-8192`) at `https://api.groq.com/openai/v1`.
+- System deps (Ubuntu):
+  ```bash
+  apt install tesseract-ocr libtesseract-dev libleptonica-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+  ```
 
 ## Platform Quirks
-- Global hotkey uses `ashpd` (xdg-desktop-portal). Requires GNOME 48+ or KDE Plasma.
-- On GNOME 46 (Ubuntu 24.04): emits warning, hotkey unavailable. Use UI buttons instead.
-- Gdk/pen display can crash in release mode on Wayland (see bug.md).
+- Global hotkey (`Ctrl+Shift+S`) requires `ashpd` (xdg-desktop-portal). Works on GNOME 48+ / KDE Plasma. On GNOME 46 (Ubuntu 24.04) the hotkey is unavailable; use UI capture buttons instead.
+- Gdk/pen display can crash in release mode on Wayland.
