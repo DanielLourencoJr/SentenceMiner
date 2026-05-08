@@ -50,3 +50,59 @@ fn is_image_file(path: &Path) -> bool {
         None => false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::is_image_file;
+    use std::path::Path;
+
+    #[test]
+    fn detects_png_extension() {
+        assert!(is_image_file(Path::new("screenshot.png")));
+    }
+
+    #[test]
+    fn detects_uppercase_png() {
+        assert!(is_image_file(Path::new("screenshot.PNG")));
+    }
+
+    #[test]
+    fn detects_jpg_extension() {
+        assert!(is_image_file(Path::new("photo.jpg")));
+    }
+
+    #[test]
+    fn detects_uppercase_jpg() {
+        assert!(is_image_file(Path::new("photo.JPG")));
+    }
+
+    #[test]
+    fn detects_jpeg_extension() {
+        assert!(is_image_file(Path::new("image.jpeg")));
+    }
+
+    #[test]
+    fn detects_uppercase_jpeg() {
+        assert!(is_image_file(Path::new("image.JPEG")));
+    }
+
+    #[test]
+    fn rejects_txt_extension() {
+        assert!(!is_image_file(Path::new("readme.txt")));
+    }
+
+    #[test]
+    fn rejects_path_without_extension() {
+        assert!(!is_image_file(Path::new("README")));
+    }
+
+    #[test]
+    fn rejects_empty_path() {
+        assert!(!is_image_file(Path::new("")));
+    }
+
+    #[test]
+    fn detects_mixed_case_extension() {
+        assert!(is_image_file(Path::new("image.PnG")));
+    }
+}

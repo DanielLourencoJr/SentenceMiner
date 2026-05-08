@@ -86,7 +86,12 @@ pub async fn generate_back(
         return Err(format!("Erro HTTP: {}", resp.status()));
     }
 
-    let body: ChatResponse = resp.json().await.map_err(|e| e.to_string())?;
+    let body_text = resp.text().await.map_err(|e| e.to_string())?;
+    parse_api_response(&body_text, card_model)
+}
+
+fn parse_api_response(body_text: &str, card_model: &str) -> Result<String, String> {
+    let body: ChatResponse = serde_json::from_str(body_text).map_err(|e| e.to_string())?;
     let content = body
         .choices
         .get(0)
@@ -99,6 +104,8 @@ pub async fn generate_back(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ─── build_chat_request ───────────────────────────────────────────
 
     #[test]
     fn builds_correct_request_payload() {
@@ -129,6 +136,8 @@ mod tests {
         assert_eq!(req.messages[0].role, "user");
     }
 
+    // ─── build_url ────────────────────────────────────────────────────
+
     #[test]
     fn url_without_trailing_slash() {
         let url = build_url("https://api.groq.com/openai/v1");
@@ -145,5 +154,53 @@ mod tests {
     fn url_with_long_base_url() {
         let url = build_url("https://custom-api.example.com/v1/openai");
         assert_eq!(url, "https://custom-api.example.com/v1/openai/chat/completions");
+    }
+
+    // ─── parse_api_response ───────────────────────────────────────────
+
+    fn sample_beginner_response() -> String {
+        r#"{"choices":[{"message":{"content":"TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou"}}]}"#.to_string()
+    }
+
+    #[test]
+    fn parses_valid_api_response() {
+        let result = parse_api_response(&sample_beginner_response(), "iniciante")
+            .expect("should parse");
+        assert_eq!(result, "Ela olhou.\nolhou");
+    }
+
+    #[test]
+    fn parses_response_with_extra_whitespace_in_content() {
+        let json = r#"{"choices":[{"message":{"content":"  TRADUÇÃO\n  Olá.\n\nEQUIVALENTE\n  olá  "}}]}"#;
+        let result = parse_api_response(json, "iniciante").expect("should parse");
+        assert_eq!(result, "Olá.\nolá");
+    }
+
+    #[test]
+    fn rejects_empty_choices_array() {
+        let json = r#"{"choices":[]}"#;
+        let err = parse_api_response(json, "iniciante").expect_err("should fail");
+        assert!(err.contains("vazia"));
+    }
+
+    #[test]
+    fn rejects_malformed_json() {
+        let json = r#"{"choices":[{"message":{"content":null}}]}"#;
+        let err = parse_api_response(json, "iniciante").expect_err("should fail");
+        assert!(err.contains("invalid type"));
+    }
+
+    #[test]
+    fn rejects_response_without_choices_field() {
+        let json = r#"{"not_choices":[]}"#;
+        let err = parse_api_response(json, "iniciante").expect_err("should fail");
+        assert!(err.contains("missing field"));
+    }
+
+    #[test]
+    fn rejects_advanced_model_with_malformed_response() {
+        let json = r#"{invalid json here"#;
+        let err = parse_api_response(json, "avancado").expect_err("should fail");
+        assert!(err.contains("key must be a string"));
     }
 }
