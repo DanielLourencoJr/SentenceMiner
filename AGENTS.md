@@ -23,8 +23,10 @@
 - Naming: snake_case for Rust functions/modules; kebab-case IDs in HTML are acceptable and already used.
 
 ## Testing Guidelines
-- Run tests: `cargo test` (from `src-tauri/` directory)
-- Tests in: `src-tauri/tests/config_tests.rs`
+- Rust tests: `cd src-tauri && cargo test` (unit + integration)
+- Rust unit tests only: `cd src-tauri && cargo test --lib`
+- JS frontend tests: `npm test` (from repo root)
+- Tests in: `src-tauri/tests/config_tests.rs`, `src-tauri/tests/anki_client_tests.rs`, `src-tauri/tests/translation_tests.rs`, `__tests__/`
 - Manual checks:
   - Selection capture and OCR.
   - AnkiConnect addNote.

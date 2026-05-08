@@ -6,7 +6,7 @@ import {
   clearPreview,
   populateSelect,
   populatePresetSelect,
-} from "../ui-state.js";
+} from "@ui/ui-state.js";
 
 // ─── setStatus ────────────────────────────────────────────────────────
 

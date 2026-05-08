@@ -5,7 +5,7 @@ import {
   getPresetTemplate,
   buildFront,
   buildFrontPreviewHtml,
-} from "../card.js";
+} from "@ui/card.js";
 
 // ─── escapeHtml ───────────────────────────────────────────────────────
 

@@ -53,8 +53,10 @@ fn is_image_file(path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::is_image_file;
+    use super::{is_image_file, latest_image_file, screenshots_dir};
     use std::path::Path;
+
+    // ─── is_image_file ────────────────────────────────────────────────
 
     #[test]
     fn detects_png_extension() {
@@ -104,5 +106,79 @@ mod tests {
     #[test]
     fn detects_mixed_case_extension() {
         assert!(is_image_file(Path::new("image.PnG")));
+    }
+
+    // ─── screenshots_dir ──────────────────────────────────────────────
+
+    #[test]
+    fn screenshots_dir_uses_home() {
+        std::env::set_var("HOME", "/tmp/test-home");
+        let dir = screenshots_dir().expect("screenshots dir");
+        assert_eq!(dir, Path::new("/tmp/test-home/Pictures/Screenshots"));
+    }
+
+    #[test]
+    fn screenshots_dir_fails_without_home() {
+        std::env::remove_var("HOME");
+        let err = screenshots_dir().expect_err("should fail");
+        assert!(err.contains("not found"));
+    }
+
+    // ─── latest_image_file ────────────────────────────────────────────
+
+    #[test]
+    fn latest_image_file_returns_most_recent_image() {
+        let dir = std::env::temp_dir().join("test_screenshots");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create dir");
+
+        // Create files with different extensions
+        std::fs::write(dir.join("old.txt"), "text").ok();
+        std::fs::write(dir.join("newer.png"), "png").ok();
+
+        // Sleep to ensure different timestamps
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        std::fs::write(dir.join("latest.jpg"), "jpg").ok();
+
+        let result = latest_image_file(&dir);
+        assert!(result.is_some());
+        let path = result.unwrap();
+        assert!(path.ends_with("latest.jpg"), "got: {:?}", path);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn latest_image_file_returns_none_for_empty_dir() {
+        let dir = std::env::temp_dir().join("test_empty_screenshots");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create dir");
+
+        let result = latest_image_file(&dir);
+        assert!(result.is_none());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn latest_image_file_skips_non_image_files() {
+        let dir = std::env::temp_dir().join("test_mixed_screenshots");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create dir");
+
+        std::fs::write(dir.join("readme.txt"), "text").ok();
+        std::fs::write(dir.join("data.csv"), "csv").ok();
+
+        let result = latest_image_file(&dir);
+        assert!(result.is_none());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn latest_image_file_returns_none_for_nonexistent_dir() {
+        let dir = Path::new("/tmp/nonexistent_test_dir_12345");
+        let result = latest_image_file(dir);
+        assert!(result.is_none());
     }
 }

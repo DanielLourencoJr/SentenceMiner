@@ -35,3 +35,5 @@ futures-lite = "2"
 [dev-dependencies]
 toml = "0.8"
 serde = { version = "1.0", features = ["derive"] }
+tempfile = "3"
+wiremock = "0.6"

@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod config_tests {
-    use app_lib::config::Config;
+    use app_lib::config::{self, Config};
+    use std::fs;
+    use tempfile::tempdir;
+
+    // ─── Default value tests ──────────────────────────────────────────
 
     #[test]
     fn default_source_language_is_english() {
@@ -103,7 +107,7 @@ mod config_tests {
         let original = Config::default();
         let serialized = toml::to_string_pretty(&original).expect("serialize");
         let deserialized: Config = toml::from_str(&serialized).expect("deserialize");
-        
+
         assert_eq!(original.general.source_language, deserialized.general.source_language);
         assert_eq!(original.anki.host, deserialized.anki.host);
         assert_eq!(original.anki.port, deserialized.anki.port);
@@ -122,5 +126,117 @@ mod config_tests {
         let config = Config::default();
         assert!(config.anki.port > 0);
         assert!(config.anki.port <= 65535);
+    }
+
+    // ─── Filesystem integration tests ─────────────────────────────────
+    // These tests modify the HOME env var and must run sequentially.
+    // Call with: cargo test --test config_tests -- --test-threads=1
+
+    fn with_temp_home<F>(f: F)
+    where
+        F: FnOnce(&std::path::Path),
+    {
+        let dir = tempdir().expect("create temp dir");
+        let home = dir.path().to_str().expect("valid utf-8").to_string();
+        let old_home = std::env::var("HOME").ok();
+        std::env::set_var("HOME", &home);
+        f(dir.path());
+        match old_home {
+            Some(val) => std::env::set_var("HOME", val),
+            None => std::env::remove_var("HOME"),
+        }
+    }
+
+    #[test]
+    fn load_or_create_creates_default_config_when_missing() {
+        with_temp_home(|_| {
+            let config = config::load_or_create().expect("load or create");
+            assert_eq!(config.general.source_language, "English");
+
+            let config_path = std::env::var("HOME").unwrap() + "/.config/sentenceminer/config.toml";
+            assert!(std::path::Path::new(&config_path).exists(), "config file should be created");
+        });
+    }
+
+    #[test]
+    fn load_or_create_loads_existing_config() {
+        with_temp_home(|dir| {
+            let config_path = dir.join(".config/sentenceminer/config.toml");
+            fs::create_dir_all(config_path.parent().unwrap()).expect("create dirs");
+
+            let custom_toml = r#"
+[general]
+source_language = "Japanese"
+target_language = "Brazilian Portuguese"
+
+[anki]
+host = "localhost"
+port = 8765
+deck = "JLPT"
+
+[api]
+base_url = "https://custom.api.com"
+api_key = "test-key"
+model = "custom-model"
+timeout_seconds = 30
+
+[capture]
+ocr_language = "jpn"
+
+[ui]
+default_model = "avancado"
+default_format_preset = "laranja"
+theme = "dark"
+"#;
+            fs::write(&config_path, custom_toml).expect("write config");
+
+            let config = config::load_or_create().expect("load");
+            assert_eq!(config.general.source_language, "Japanese");
+            assert_eq!(config.anki.deck, "JLPT");
+            assert_eq!(config.api.base_url, "https://custom.api.com");
+            assert_eq!(config.api.api_key, "test-key");
+            assert_eq!(config.api.model, "custom-model");
+            assert_eq!(config.api.timeout_seconds, 30);
+            assert_eq!(config.capture.ocr_language, "jpn");
+            assert_eq!(config.ui.default_model, "avancado");
+            assert_eq!(config.ui.default_format_preset, "laranja");
+            assert_eq!(config.ui.theme, "dark");
+        });
+    }
+
+    #[test]
+    fn load_or_create_returns_default_when_no_config_file() {
+        with_temp_home(|_| {
+            let config = config::load_or_create().expect("load or create");
+            assert_eq!(config.general.source_language, "English");
+            assert_eq!(config.ui.default_model, "intermediario");
+        });
+    }
+
+    #[test]
+    fn save_writes_config_and_loads_back() {
+        with_temp_home(|_| {
+            let original = Config::default();
+            config::save(&original).expect("save");
+
+            let loaded = config::load_or_create().expect("load");
+            assert_eq!(loaded.general.source_language, original.general.source_language);
+            assert_eq!(loaded.api.base_url, original.api.base_url);
+            assert_eq!(loaded.anki.deck, original.anki.deck);
+        });
+    }
+
+    #[test]
+    fn save_preserves_custom_values_round_trip() {
+        with_temp_home(|_| {
+            let mut config = Config::default();
+            config.anki.deck = "MyCustomDeck".to_string();
+            config.ui.theme = "dark".to_string();
+            config::save(&config).expect("save");
+
+            let loaded = config::load_or_create().expect("load");
+            assert_eq!(loaded.anki.deck, "MyCustomDeck");
+            assert_eq!(loaded.ui.theme, "dark");
+        });
     }
 }
