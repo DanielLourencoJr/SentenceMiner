@@ -75,7 +75,7 @@ impl Default for Config {
             api: ApiConfig {
                 base_url: "https://api.groq.com/openai/v1".to_string(),
                 api_key: "".to_string(),
-                model: "llama3-70b-8192".to_string(),
+                model: "openai/gpt-oss-120b".to_string(),
                 timeout_seconds: 15,
             },
             capture: CaptureConfig {

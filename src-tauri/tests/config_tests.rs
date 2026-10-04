@@ -30,7 +30,7 @@ mod config_tests {
     #[test]
     fn default_api_model_is_llama3_70b() {
         let config = Config::default();
-        assert_eq!(config.api.model, "llama3-70b-8192");
+        assert_eq!(config.api.model, "openai/gpt-oss-120b");
     }
 
     #[test]

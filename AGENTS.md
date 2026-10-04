@@ -42,7 +42,7 @@ npm test
 ## Configuration & Runtime Dependencies
 - User config: `~/.config/sentenceminer/config.toml` (TOML, auto-created with defaults).
 - AnkiConnect must run at `http://localhost:8765`.
-- API defaults to Groq (`llama3-70b-8192`) at `https://api.groq.com/openai/v1`.
+- API defaults to Groq (`openai/gpt-oss-120b`) at `https://api.groq.com/openai/v1`.
 - System deps (Ubuntu):
   ```bash
   apt install tesseract-ocr libtesseract-dev libleptonica-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
