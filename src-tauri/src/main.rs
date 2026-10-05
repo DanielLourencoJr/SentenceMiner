@@ -33,22 +33,32 @@ fn toggle_main_window(app: &tauri::AppHandle) {
 // uma janela normal para o tamanho exato do monitor: cobre tudo,
 // inclusive a barra superior, e continua composta (alfa funciona).
 fn fit_to_monitor(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
-    let monitor = window
-        .current_monitor()
-        .ok()
-        .flatten()
-        .or_else(|| app.primary_monitor().ok().flatten());
-    match monitor {
-        Some(monitor) => {
-            let size = *monitor.size();
-            eprintln!("SentenceMiner: summon em {}x{}", size.width, size.height);
-            let _ = window.set_size(tauri::Size::Physical(size));
-            let _ = window.center();
-        }
-        None => {
-            eprintln!("SentenceMiner: nenhum monitor encontrado, mantendo tamanho atual");
+    if let Ok(Some(m)) = window.current_monitor() {
+        let s = m.size();
+        return apply_monitor_size(window, "atual", s.width, s.height);
+    }
+    if let Ok(Some(m)) = app.primary_monitor() {
+        let s = m.size();
+        return apply_monitor_size(window, "primário", s.width, s.height);
+    }
+    if let Ok(monitors) = app.available_monitors() {
+        if let Some(m) = monitors.into_iter().next() {
+            let s = m.size();
+            return apply_monitor_size(window, "disponível", s.width, s.height);
         }
     }
+    eprintln!("SentenceMiner: nenhum monitor encontrado, mantendo tamanho atual");
+}
+
+fn apply_monitor_size(
+    window: &tauri::WebviewWindow,
+    source: &'static str,
+    width: u32,
+    height: u32,
+) {
+    eprintln!("SentenceMiner: summon em {width}x{height} (monitor {source})");
+    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }));
+    let _ = window.center();
 }
 
 fn load_tray_icon() -> Result<tauri::image::Image<'static>, String> {
