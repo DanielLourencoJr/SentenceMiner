@@ -9,7 +9,6 @@ import { nextStep, stepAction, stepMeta } from "./wizard.js";
 
 const elements = {
   dim: document.getElementById("dim"),
-  context: document.getElementById("context"),
   stepIndicator: document.getElementById("step-indicator"),
   fieldLabel: document.getElementById("field-label"),
   fieldSentence: document.getElementById("field-sentence"),
@@ -46,7 +45,7 @@ function initializeApp() {
   for (const el of Object.values(fieldElements())) {
     el.addEventListener("keydown", handleFieldKeydown);
   }
-  elements.fieldTerm.addEventListener("input", updateTermPreview);
+  elements.fieldTerm.addEventListener("input", updateFrontPreview);
   elements.btnAdvance.addEventListener("click", () => {
     void advance();
   });
@@ -160,49 +159,28 @@ function showStep(step) {
     elements.fieldSentence.value = state.sentence;
   } else if (step === "term") {
     elements.fieldTerm.value = state.term;
-    updateTermPreview();
   } else if (step === "back") {
     elements.fieldBack.value = state.back;
   }
-  elements.frontPreview.hidden = step !== "term";
+  elements.frontPreview.hidden = step === "sentence";
+  if (step !== "sentence") {
+    updateFrontPreview();
+  }
 
-  renderContext();
   activeField().focus();
 }
 
-// Mostra as respostas já dadas, para nenhuma etapa parecer "apagada".
-function renderContext() {
-  const lines = [];
-  if (state.step !== "sentence" && state.sentence) {
-    lines.push(["Frase", state.sentence]);
-  }
-  if (state.step === "back" && state.term) {
-    lines.push(["Termo", state.term]);
-  }
-
-  elements.context.replaceChildren();
-  elements.context.hidden = lines.length === 0;
-  for (const [label, text] of lines) {
-    const row = document.createElement("p");
-    row.className = "context-row";
-    const tag = document.createElement("span");
-    tag.className = "context-tag";
-    tag.textContent = label;
-    row.appendChild(tag);
-    row.appendChild(document.createTextNode(text));
-    elements.context.appendChild(row);
-  }
-}
-
-// Preview da frente com o preset do usuário, atualizado a cada tecla.
-function updateTermPreview() {
+// A frente estilizada (preset do usuário) É a exibição da frase nas
+// etapas 2 e 3 — atualizada a cada tecla do termo, sem duplicar texto.
+function updateFrontPreview() {
   const presetTemplate = getPresetTemplate(
     state.formatPresets,
     state.defaultPreset
   );
+  const term = state.step === "term" ? elements.fieldTerm.value : state.term;
   elements.frontPreview.innerHTML = buildFrontPreviewHtml(
-    elements.fieldSentence.value,
-    elements.fieldTerm.value,
+    state.sentence,
+    term,
     presetTemplate
   );
 }

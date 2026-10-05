@@ -17,8 +17,10 @@ fn toggle_main_window(app: &tauri::AppHandle) {
                 let _ = window.hide();
             }
             _ => {
-                fit_to_monitor(app, &window);
                 let _ = window.show();
+                // Depois do show: janela visível sempre tem um monitor
+                // (oculta, current_monitor pode retornar None).
+                fit_to_monitor(app, &window);
                 let _ = window.set_focus();
                 let _ = app.emit("summon", ());
             }
@@ -36,10 +38,16 @@ fn fit_to_monitor(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
         .ok()
         .flatten()
         .or_else(|| app.primary_monitor().ok().flatten());
-    if let Some(monitor) = monitor {
-        let size = *monitor.size();
-        let _ = window.set_size(tauri::Size::Physical(size));
-        let _ = window.center();
+    match monitor {
+        Some(monitor) => {
+            let size = *monitor.size();
+            eprintln!("SentenceMiner: summon em {}x{}", size.width, size.height);
+            let _ = window.set_size(tauri::Size::Physical(size));
+            let _ = window.center();
+        }
+        None => {
+            eprintln!("SentenceMiner: nenhum monitor encontrado, mantendo tamanho atual");
+        }
     }
 }
 

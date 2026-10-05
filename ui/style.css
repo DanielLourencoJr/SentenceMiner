@@ -427,38 +427,6 @@ body.summon-body,
   margin: 10px 0 0;
 }
 
-.context {
-  margin: 4px 0 6px;
-}
-
-.context[hidden] {
-  display: none;
-}
-
-.context-row {
-  margin: 2px 0;
-  font-size: 0.82rem;
-  color: var(--muted);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.context-tag {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  margin-right: 6px;
-}
-
-.summon-actions {
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .front-preview {
   margin-top: 10px;
   padding: 10px 12px;
