@@ -18,6 +18,8 @@ cargo tauri dev
 # portal refuses to bind. Test the shortcut by launching the debug binary
 # from the app grid (needs
 # ~/.local/share/applications/com.daniel.sentenceminer.desktop installed).
+# The debug binary always loads the devUrl, so keep `python3 dev_server.py`
+# running from the repo root alongside the grid launch.
 ```
 
 If `/tmp` is small:
