@@ -2,6 +2,7 @@ mod anki;
 mod api;
 mod capture;
 mod config;
+mod hotkey;
 
 use serde::Serialize;
 use tauri::{
@@ -251,6 +252,7 @@ fn main() {
             if let Err(e) = build_tray(app.handle()) {
                 eprintln!("Falha ao criar tray icon: {e}");
             }
+            hotkey::spawn_summon_shortcut(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
