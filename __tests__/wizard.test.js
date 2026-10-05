@@ -31,7 +31,7 @@ describe("wizard steps", () => {
 
   it("describes position and label", () => {
     expect(stepMeta("sentence")).toEqual({
-      label: "Frase",
+      label: "Sentence",
       position: 1,
       total: 3,
     });
@@ -46,8 +46,8 @@ describe("wizard steps", () => {
   });
 
   it("labels the action button per step", () => {
-    expect(stepAction("sentence")).toBe("Avançar");
-    expect(stepAction("term")).toBe("Gerar verso");
-    expect(stepAction("back")).toBe("Enviar ao Anki");
+    expect(stepAction("sentence")).toBe("Next");
+    expect(stepAction("term")).toBe("Generate back");
+    expect(stepAction("back")).toBe("Send to Anki");
   });
 });

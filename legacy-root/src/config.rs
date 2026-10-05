@@ -78,20 +78,20 @@ impl Default for Config {
                 ocr_language: "eng".to_string(),
             },
             ui: UiConfig {
-                default_model: "intermediario".to_string(),
-                default_format_preset: "negrito".to_string(),
+                default_model: "intermediate".to_string(),
+                default_format_preset: "bold".to_string(),
             },
             format_presets: vec![
                 FormatPreset {
-                    name: "negrito".to_string(),
+                    name: "bold".to_string(),
                     template: "<b>{term}</b>".to_string(),
                 },
                 FormatPreset {
-                    name: "laranja".to_string(),
+                    name: "orange".to_string(),
                     template: "<span style=\"color: #e05c00\">{term}</span>".to_string(),
                 },
                 FormatPreset {
-                    name: "sublinhado".to_string(),
+                    name: "underline".to_string(),
                     template: "<u>{term}</u>".to_string(),
                 },
             ],

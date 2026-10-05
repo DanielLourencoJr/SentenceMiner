@@ -4,7 +4,7 @@ export function hasTauri() {
 
 export async function invokeCommand(command, payload) {
   if (!hasTauri()) {
-    throw new Error("Tauri API não encontrada.");
+    throw new Error("Tauri API not found.");
   }
 
   return window.__TAURI__.core.invoke(command, payload);

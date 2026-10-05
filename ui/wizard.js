@@ -1,15 +1,15 @@
 export const STEPS = ["sentence", "term", "back"];
 
 const LABELS = {
-  sentence: "Frase",
-  term: "Termo desconhecido",
-  back: "Verso",
+  sentence: "Sentence",
+  term: "Unknown term",
+  back: "Back",
 };
 
 const ACTIONS = {
-  sentence: "Avançar",
-  term: "Gerar verso",
-  back: "Enviar ao Anki",
+  sentence: "Next",
+  term: "Generate back",
+  back: "Send to Anki",
 };
 
 export function stepIndex(step) {
@@ -20,7 +20,7 @@ export function isStep(step) {
   return stepIndex(step) !== -1;
 }
 
-// Avança o wizard. Retorna o próximo passo, ou "done" após o verso.
+// Advance the wizard. Returns the next step, or "done" after the back.
 export function nextStep(step) {
   const idx = stepIndex(step);
   if (idx === -1) {
@@ -41,12 +41,12 @@ export function stepMeta(step) {
   };
 }
 
-// Frase e verso aceitam quebra de linha (textarea); só o termo é unilinha.
+// Sentence and back accept line breaks (textarea); only the term is single-line.
 export function usesTextarea(step) {
   return step !== "term";
 }
 
-// Texto do botão de ação de cada passo.
+// Action button text for each step.
 export function stepAction(step) {
-  return ACTIONS[step] ?? "Avançar";
+  return ACTIONS[step] ?? "Next";
 }

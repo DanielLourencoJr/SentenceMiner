@@ -122,17 +122,17 @@ describe("populateSelect", () => {
 
 describe("populatePresetSelect", () => {
   const presets = [
-    { name: "negrito", template: "<b>{term}</b>" },
-    { name: "laranja", template: '<span style="color:#e05c00">{term}</span>' },
+    { name: "bold", template: "<b>{term}</b>" },
+    { name: "orange", template: '<span style="color:#e05c00">{term}</span>' },
   ];
 
   it("populates from array of preset objects", () => {
     const select = document.createElement("select");
     populatePresetSelect(select, presets);
     expect(select.options.length).toBe(2);
-    expect(select.options[0].value).toBe("negrito");
-    expect(select.options[0].textContent).toBe("negrito");
-    expect(select.options[1].value).toBe("laranja");
+    expect(select.options[0].value).toBe("bold");
+    expect(select.options[0].textContent).toBe("bold");
+    expect(select.options[1].value).toBe("orange");
   });
 
   it("clears existing options", () => {

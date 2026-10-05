@@ -3,7 +3,7 @@
 ## Project Structure
 - `src-tauri/`: Rust backend (Tauri v2). Entry: `src-tauri/src/main.rs`. Lib: `src/lib.rs`.
 - `ui/`: frontend HTML/CSS/JS vanilla (no frameworks), embedded in the binary (custom-protocol).
-- `SentenceMiner_Spec.md`: full spec reference for card models, API format, config schema.
+- `src-tauri/src/main.rs` + `hotkey.rs`: commands, tray icon, summon window, portal hotkey.
 - `legacy-root/`: old project kept for reference, not used by Tauri build.
 
 ## Build and Run

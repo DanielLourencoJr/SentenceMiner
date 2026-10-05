@@ -1,148 +1,142 @@
 # SentenceMiner
 
-SentenceMiner é um aplicativo desktop em Tauri para capturar uma frase, gerar o verso de um flashcard com uma API compatível com OpenAI e adicionar a nota ao Anki via AnkiConnect.
+SentenceMiner is a Tauri desktop app that captures a sentence, generates a flashcard back with an OpenAI-compatible API, and adds the note to Anki via AnkiConnect.
 
-O foco atual do projeto é reduzir atrito no fluxo manual de mineração de frases. O programa não tenta automatizar tudo o que estava previsto na especificação original; ele implementa um fluxo mais simples que já resolve a maior parte do problema.
+The current focus is reducing friction in the manual sentence-mining flow. The program does not try to automate everything from the original specification; it implements a simpler flow that already solves most of the problem.
 
-## O Que O Programa Faz Hoje
+## What The Program Does Today
 
-O fluxo atual é este:
+The current flow is:
 
-1. Captura uma frase selecionada na tela usando a PRIMARY selection do Linux/X11.
-2. Como alternativa, roda OCR no screenshot mais recente salvo em `~/Pictures/Screenshots`.
-3. Mostra a frase capturada na interface.
-4. Permite que o usuário digite manualmente o termo desconhecido.
-5. Gera o verso do card por API, com três modos:
-   - `iniciante`
-   - `intermediario`
-   - `avancado`
-6. Aplica um preset simples de formatação HTML ao termo na frente do card.
-7. Envia a nota para o Anki usando o note type selecionado na UI.
+1. Summon a spotlight-style dialog with the global hotkey (`Super+J`, configurable) or the tray icon.
+2. The dialog auto-captures the selected text using the Linux/X11 PRIMARY selection.
+3. Step 1 shows the captured sentence for review (multiline supported).
+4. Step 2 asks for the unknown term, with a live preview of the card front using the configured format preset.
+5. Step 3 generates the card back via API in three modes:
+   - `beginner`
+   - `intermediate`
+   - `advanced`
+6. The last Enter sends the note to Anki using the default deck and note type.
 
-Em outras palavras: hoje o app é um assistente de captura + geração + envio ao Anki, com seleção manual do termo.
+In other words: today the app is a capture + generate + send-to-Anki assistant, with manual term entry (term inference is planned).
 
-## O Que Ele Não Faz Hoje
+Each step advances with `Ctrl+Enter` (or its action button); `Esc` cancels. The rest of the screen is dimmed while the dialog is open.
 
-Estas ideias aparecem na especificação, mas não representam o comportamento atual do código:
+## What It Does Not Do Today
 
-- tokenização clicável da frase;
-- seleção do termo por clique em tokens;
-- modo de edição com retokenização;
-- OCR por seleção de região desenhada na tela;
-- fallback automático para OCR quando não houver seleção;
-- gerenciamento de vocabulário conhecido.
+These ideas may appear in older notes, but they do not reflect current code behavior:
 
-Existe código inicial de overlay em `ui/overlay.*`, mas ele não está integrado ao backend atual.
+- clickable tokenization of the sentence;
+- term selection by clicking tokens;
+- edit mode with retokenization;
+- live region-based OCR capture;
+- automatic OCR fallback when there is no selection;
+- known-vocabulary management.
 
-## Arquitetura
+## Architecture
 
 ### Backend
 
-O backend fica em `src-tauri/` e expõe comandos Tauri para:
+The backend lives in `src-tauri/` and exposes Tauri commands to:
 
-- capturar texto da PRIMARY selection;
-- fazer OCR do último screenshot;
-- listar decks e note types do Anki;
-- gerar o verso do card por HTTP;
-- adicionar a nota ao Anki;
-- fornecer presets e defaults para a UI.
+- capture text from the PRIMARY selection;
+- OCR the latest screenshot;
+- summon/hide the dialog and fit it to the monitor;
+- register the global hotkey via the portal;
+- list Anki decks and note types;
+- generate the card back over HTTP;
+- add the note to Anki;
+- provide presets and defaults to the UI.
 
-Módulos principais:
+Main modules:
 
-- `src-tauri/src/main.rs`: registro dos comandos e hotkey global.
-- `src-tauri/src/config.rs`: leitura e escrita de `~/.config/sentenceminer/config.toml`.
-- `src-tauri/src/capture/selection.rs`: captura da seleção primária via `arboard`.
-- `src-tauri/src/capture/ocr.rs`: OCR do screenshot mais recente com `leptess`.
-- `src-tauri/src/api/translation.rs`: chamada para `/chat/completions`.
-- `src-tauri/src/anki/client.rs`: integração com AnkiConnect.
+- `src-tauri/src/main.rs`: command registration, tray icon, summon window.
+- `src-tauri/src/hotkey.rs`: global shortcut via `org.freedesktop.portal.GlobalShortcuts`.
+- `src-tauri/src/config.rs`: reads/writes `~/.config/sentenceminer/config.toml`.
+- `src-tauri/src/capture/selection.rs`: primary selection capture via `arboard`.
+- `src-tauri/src/capture/ocr.rs`: OCR of the latest screenshot with `leptess`.
+- `src-tauri/src/api/translation.rs`: `/chat/completions` call.
+- `src-tauri/src/anki/client.rs`: AnkiConnect integration.
 
 ### Frontend
 
-O frontend fica em `ui/` e é HTML/CSS/JS vanilla.
+The frontend lives in `ui/` and is vanilla HTML/CSS/JS. It is embedded into the binary (custom-protocol, no dev server).
 
-A interface atual tem:
+The summon dialog has:
 
-- botões para capturar seleção e fazer OCR;
-- campo da frase;
-- campo manual para o termo;
-- seletor do modelo de geração;
-- seletor de preset de formatação;
-- seletor de note type e deck do Anki;
-- campo editável para o verso;
-- botão para adicionar ao Anki.
+- one field per step (sentence, term, back);
+- live front preview with the format preset applied;
+- per-step action button;
+- status line with actionable error messages.
 
-## Fluxo De Uso Atual
+## Current Usage Flow
 
-1. O usuário seleciona uma frase em outro aplicativo e usa a hotkey global, ou clica em `Capturar selecao`.
-2. Se quiser, pode usar `OCR ultimo print` para extrair texto do screenshot mais recente.
-3. A frase aparece no campo `Frente (frase)`.
-4. O usuário digita o termo desconhecido no campo `Termo desconhecido`.
-5. O usuário escolhe o modelo de geração.
-6. O usuário clica em `Gerar verso`.
-7. O texto retornado pela API aparece no campo `Verso`, onde ainda pode ser editado.
-8. O usuário escolhe deck e note type do Anki.
-9. O usuário clica em `Adicionar ao Anki`.
+1. The user selects a sentence in another app and presses the global hotkey (or tray → Show).
+2. The sentence is already in step 1 for review.
+3. The user types the unknown term in step 2 (front preview updates live).
+4. The generated text appears in step 3, still editable.
+5. The last Enter sends the note to the default deck with the first available note type.
 
-Na hora de enviar, o frontend procura a primeira ocorrência literal do termo dentro da frase e aplica o preset HTML selecionado.
+When sending, the frontend applies the configured HTML preset to the first literal occurrence of the term in the sentence.
 
-## Modelos De Geração
+## Generation Models
 
-O backend monta prompts diferentes conforme o modelo escolhido:
+The backend builds different prompts per selected model:
 
-- `iniciante`: tradução natural da frase e equivalente do termo em português.
-- `intermediario`: definição curta em português e até três sinônimos em inglês.
-- `avancado`: definição curta no idioma de origem.
+- `beginner`: natural translation of the sentence plus the term equivalent in Portuguese.
+- `intermediate`: short definition in Portuguese plus up to three English synonyms.
+- `advanced`: short definition in the source language.
 
-O texto retornado pela API é inserido diretamente no campo `Verso`.
+The text returned by the API goes straight into the `Back` field.
 
-## Integração Com Anki
+## Anki Integration
 
-O app usa AnkiConnect em `http://localhost:8765`.
+The app uses AnkiConnect at `http://localhost:8765`.
 
-Hoje ele:
+Today it:
 
-- verifica versão/conexão;
-- lista decks;
-- lista note types;
-- lista os campos do modelo selecionado;
-- envia a nota preenchendo os dois primeiros campos do modelo com `front` e `back`.
+- checks version/connection;
+- lists decks;
+- lists note types;
+- lists the selected model's fields;
+- sends the note filling the model's first two fields with `front` and `back`.
 
-Se nenhum deck for informado no envio, usa o deck padrão do arquivo de configuração.
+If no deck is configured, it uses the default deck from the config file.
 
-## Configuração
+## Configuration
 
-Na primeira execução o app cria:
+On first run the app creates:
 
 `~/.config/sentenceminer/config.toml`
 
-O arquivo contém:
+The file contains:
 
-- idiomas de origem e destino;
-- host, porta, deck e tags do Anki;
-- URL base, chave, modelo e timeout da API;
-- hotkey global;
-- idioma do OCR;
-- modelo padrão da UI;
-- preset padrão de formatação;
-- lista de presets HTML.
+- source and target languages;
+- Anki host, port, deck and tags;
+- API base URL, key, model and timeout;
+- global hotkey (`[capture].hotkey`, GTK accelerator notation, e.g. `"<Super>j"`);
+- OCR language;
+- default UI model;
+- default format preset;
+- HTML preset list.
 
-Presets padrão atuais:
+Current default presets:
 
-- `negrito`
-- `laranja`
-- `sublinhado`
+- `bold`
+- `orange`
+- `underline`
 
-## Desenvolvimento
+## Development
 
-### Requisitos
+### Requirements
 
 - Rust 2021
 - Tauri v2
-- Anki com AnkiConnect
-- Tesseract e Leptonica
-- ambiente Linux com suporte adequado para PRIMARY selection
+- Anki with AnkiConnect
+- Tesseract and Leptonica
+- Linux environment with working PRIMARY selection
 
-Dependências de sistema esperadas no Ubuntu:
+Expected system dependencies on Ubuntu:
 
 ```bash
 sudo apt install \
@@ -155,32 +149,39 @@ sudo apt install \
   librsvg2-dev
 ```
 
-### Rodar Em Desenvolvimento
+On Arch (see AGENTS.md for the exact list), the equivalents come from pacman, plus a tray host (e.g. GNOME AppIndicator extension) and the GlobalShortcuts portal for the hotkey.
 
-Um comando só (a UI vai embarcada no binário, sem servidor):
+### Running In Development
+
+One command (the UI is embedded in the binary, no server):
 
 ```bash
 cd src-tauri
 cargo tauri dev
 ```
 
-Se `/tmp` for pequeno:
+If `/tmp` is small:
 
 ```bash
 export TMPDIR=/media/<disk>/tmp
 export CARGO_TARGET_DIR=/media/<disk>/sentenceminer-target
 ```
 
-## Limites E Observações
+### Testing The Global Hotkey In Dev
 
-- O hotkey global pode falhar em Wayland. O app emite um aviso quando detecta esse ambiente.
-- A captura de texto atual depende da PRIMARY selection; ela não usa o clipboard comum como fallback.
-- O OCR atual não captura uma região da tela em tempo real. Ele lê apenas o screenshot mais recente da pasta `~/Pictures/Screenshots`.
-- A formatação do termo na frente depende de correspondência literal simples com `indexOf`, usando a primeira ocorrência encontrada.
+`cargo tauri dev` has no app-id, so the portal refuses to bind. Launch the debug binary from the app grid (needs `~/.local/share/applications/com.daniel.sentenceminer.desktop` installed) and watch for the system consent dialog.
 
-## Estrutura Do Repositório
+## Limits And Notes
 
-- `src-tauri/`: backend Rust/Tauri.
-- `ui/`: frontend HTML/CSS/JS (embarcado no binário).
-- `SentenceMiner_Spec.md`: especificação inicial, hoje parcialmente divergente do código.
-- `legacy-root/`: projeto antigo mantido apenas como referência.
+- The global hotkey needs the `GlobalShortcuts` portal (GNOME 48+/KDE). Without it, use the tray.
+- Current text capture depends on the PRIMARY selection; it does not use the regular clipboard as fallback.
+- Current OCR does not capture a screen region live. It only reads the latest screenshot from `~/Pictures/Screenshots`.
+- Front term formatting depends on simple literal matching with `indexOf`, using the first occurrence found.
+- Config files written by older versions may carry legacy Portuguese identifiers (`intermediario`, `negrito`, ...); update them to the English ids (`intermediate`, `bold`, ...) — unknown model ids fail with "Invalid model.".
+
+## Repository Structure
+
+- `src-tauri/`: Rust/Tauri backend.
+- `ui/`: vanilla HTML/CSS/JS frontend.
+- `__tests__/`: JS tests (vitest, run from the repo root).
+- `legacy-root/`: old project kept for reference only.

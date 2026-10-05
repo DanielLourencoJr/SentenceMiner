@@ -27,7 +27,7 @@ impl AnkiClient {
         };
         let resp: AnkiResponse<u16> = self.post(req).await?;
         resp.result
-            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
     pub async fn get_deck_names(&self) -> Result<Vec<String>, String> {
@@ -38,7 +38,7 @@ impl AnkiClient {
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
         resp.result
-            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
     pub async fn get_model_names(&self) -> Result<Vec<String>, String> {
@@ -49,7 +49,7 @@ impl AnkiClient {
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
         resp.result
-            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
     pub async fn get_model_field_names(&self, model: &str) -> Result<Vec<String>, String> {
@@ -68,7 +68,7 @@ impl AnkiClient {
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
         resp.result
-            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
     pub async fn add_note(
@@ -92,7 +92,7 @@ impl AnkiClient {
         };
         let resp: AnkiResponse<i64> = self.post(req).await?;
         resp.result
-            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
     async fn post<T: Serialize, R: for<'de> Deserialize<'de>>(

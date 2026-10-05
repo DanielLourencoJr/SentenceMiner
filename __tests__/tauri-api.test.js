@@ -47,13 +47,13 @@ describe("invokeCommand", () => {
 
   it("throws when Tauri is not available", async () => {
     await expect(invokeCommand("test")).rejects.toThrow(
-      "Tauri API não encontrada.",
+      "Tauri API not found.",
     );
   });
 
   it("throws when passing payload without Tauri", async () => {
     await expect(invokeCommand("cmd", { key: "val" })).rejects.toThrow(
-      "Tauri API não encontrada.",
+      "Tauri API not found.",
     );
   });
 

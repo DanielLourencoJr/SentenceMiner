@@ -19,8 +19,8 @@ fn toggle_main_window(app: &tauri::AppHandle) {
             }
             _ => {
                 let _ = window.show();
-                // Depois do show: janela visível sempre tem um monitor
-                // (oculta, current_monitor pode retornar None).
+                // After show: a visible window always has a monitor
+                // (hidden ones may return None from current_monitor).
                 fit_to_monitor(app, &window);
                 let _ = window.set_focus();
                 let _ = app.emit("summon", ());
@@ -29,26 +29,26 @@ fn toggle_main_window(app: &tauri::AppHandle) {
     }
 }
 
-// Fullscreen de verdade + transparência são incompatíveis no Mutter
-// (janela fullscreen sai do compositor). Em vez disso, dimensionamos
-// uma janela normal para o tamanho exato do monitor: cobre tudo,
-// inclusive a barra superior, e continua composta (alfa funciona).
+// True fullscreen + transparency are incompatible on Mutter
+// (a fullscreen window leaves the compositor). Instead, we size
+// a normal window to the exact monitor size: it covers everything,
+// including the top bar, and stays composited (alpha works).
 fn fit_to_monitor(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
     if let Ok(Some(m)) = window.current_monitor() {
         let s = m.size();
-        return apply_monitor_size(window, "atual", s.width, s.height);
+        return apply_monitor_size(window, "current", s.width, s.height);
     }
     if let Ok(Some(m)) = app.primary_monitor() {
         let s = m.size();
-        return apply_monitor_size(window, "primário", s.width, s.height);
+        return apply_monitor_size(window, "primary", s.width, s.height);
     }
     if let Ok(monitors) = app.available_monitors() {
         if let Some(m) = monitors.into_iter().next() {
             let s = m.size();
-            return apply_monitor_size(window, "disponível", s.width, s.height);
+            return apply_monitor_size(window, "available", s.width, s.height);
         }
     }
-    eprintln!("SentenceMiner: nenhum monitor encontrado, mantendo tamanho atual");
+    eprintln!("SentenceMiner: no monitor found, keeping current size");
 }
 
 fn apply_monitor_size(
@@ -57,7 +57,7 @@ fn apply_monitor_size(
     width: u32,
     height: u32,
 ) {
-    eprintln!("SentenceMiner: summon em {width}x{height} (monitor {source})");
+    eprintln!("SentenceMiner: summon at {width}x{height} (monitor {source})");
     let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }));
     let _ = window.center();
 }
@@ -76,8 +76,8 @@ fn load_tray_icon() -> Result<tauri::image::Image<'static>, String> {
 }
 
 fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let toggle_item = MenuItem::with_id(app, "toggle", "Mostrar/Ocultar", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+    let toggle_item = MenuItem::with_id(app, "toggle", "Show/Hide", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&toggle_item, &quit_item])?;
 
     let icon = load_tray_icon()?;
@@ -165,7 +165,7 @@ async fn anki_add_note(
     let client = anki::client::AnkiClient::new(&state.anki.host, state.anki.port);
     let fields = client.get_model_field_names(&model).await?;
     if fields.is_empty() {
-        return Err("Modelo nao tem campos.".to_string());
+        return Err("Model has no fields.".to_string());
     }
     let first = fields
         .first()
@@ -252,7 +252,7 @@ fn main() {
         .manage(config)
         .setup(move |app| {
             if let Err(e) = build_tray(app.handle()) {
-                eprintln!("Falha ao criar tray icon: {e}");
+                eprintln!("Failed to create tray icon: {e}");
             }
             hotkey::spawn_summon_shortcut(app.handle().clone(), summon_trigger.clone());
             Ok(())

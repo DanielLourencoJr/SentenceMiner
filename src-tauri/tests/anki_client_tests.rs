@@ -94,7 +94,7 @@ async fn add_note_returns_note_id() {
 
     let mut fields = serde_json::Map::new();
     fields.insert("Front".to_string(), json!("hello world"));
-    fields.insert("Back".to_string(), json!("olá mundo"));
+    fields.insert("Back".to_string(), json!("hello world"));
 
     let note_id = client
         .add_note("Default", "Basic", fields, &["sentenceminer".to_string()])

@@ -1,9 +1,9 @@
 pub fn parse_and_normalize_back(card_model: &str, content: &str) -> Result<String, String> {
     let expected_sections = match card_model {
-        "iniciante" => &["TRADUÇÃO", "EQUIVALENTE"][..],
-        "intermediario" => &["DEFINIÇÃO", "SUPPORT"][..],
-        "avancado" => &["DEFINITION", "SUPPORT"][..],
-        _ => return Err("Modelo invalido.".to_string()),
+        "beginner" => &["TRADUÇÃO", "EQUIVALENTE"][..],
+        "intermediate" => &["DEFINIÇÃO", "SUPPORT"][..],
+        "advanced" => &["DEFINITION", "SUPPORT"][..],
+        _ => return Err("Invalid model.".to_string()),
     };
 
     let sections = parse_sections(content, expected_sections)?;
@@ -22,11 +22,11 @@ fn parse_sections(
         skip_blank_lines(&lines, &mut idx);
 
         let line = lines.get(idx).ok_or_else(|| {
-            format!("Resposta fora do formato esperado: faltando seção {heading}.")
+            format!("Response outside expected format: missing section {heading}.")
         })?;
         if line.trim() != *heading {
             return Err(format!(
-                "Resposta fora do formato esperado: seção {heading} ausente ou fora de ordem."
+                "Response outside expected format: section {heading} missing or out of order."
             ));
         }
         idx += 1;
@@ -38,7 +38,7 @@ fn parse_sections(
 
     skip_blank_lines(&lines, &mut idx);
     if idx < lines.len() {
-        return Err("Resposta fora do formato esperado: conteúdo extra inválido.".to_string());
+        return Err("Response outside expected format: invalid trailing content.".to_string());
     }
 
     Ok(parsed)
@@ -64,7 +64,7 @@ fn collect_section_content(
 
     let content = collected.join("\n").trim().to_string();
     if content.is_empty() {
-        return Err("Resposta fora do formato esperado: seção vazia.".to_string());
+        return Err("Response outside expected format: empty section.".to_string());
     }
 
     Ok(content)
@@ -159,7 +159,7 @@ mod tests {
         let lines = &["HEADER"];
         let mut idx = 1;
         let err = collect_section_content(lines, &mut idx, None).expect_err("should reject empty");
-        assert!(err.contains("seção vazia"));
+        assert!(err.contains("empty section"));
     }
 
     #[test]
@@ -247,31 +247,31 @@ mod tests {
     #[test]
     fn parses_beginner_response() {
         let parsed = parse_and_normalize_back(
-            "iniciante",
-            "TRADUÇÃO\nEla olhou para ele com uma expressão inescrutável.\n\nEQUIVALENTE\ninescrutável",
+            "beginner",
+            "TRADUÇÃO\nShe looked at him with an inscrutable expression.\n\nEQUIVALENTE\ninscrutable",
         )
         .expect("response should parse");
 
         assert_eq!(
             parsed,
-            "Ela olhou para ele com uma expressão inescrutável.\ninescrutável"
+            "She looked at him with an inscrutable expression.\ninscrutable"
         );
     }
 
     #[test]
     fn normalizes_extra_blank_lines() {
         let parsed = parse_and_normalize_back(
-            "intermediario",
-            "\n\nDEFINIÇÃO\nDifícil de entender.\n\n\nSUPPORT\nenigmatic, unreadable\n\n",
+            "intermediate",
+            "\n\nDEFINIÇÃO\nHard to understand.\n\n\nSUPPORT\nenigmatic, unreadable\n\n",
         )
         .expect("response should parse");
 
-        assert_eq!(parsed, "Difícil de entender.\nenigmatic, unreadable");
+        assert_eq!(parsed, "Hard to understand.\nenigmatic, unreadable");
     }
 
     #[test]
     fn rejects_missing_section() {
-        let err = parse_and_normalize_back("avancado", "DEFINITION\nHard to understand.")
+        let err = parse_and_normalize_back("advanced", "DEFINITION\nHard to understand.")
             .expect_err("missing section should fail");
 
         assert!(err.contains("SUPPORT"));
@@ -280,8 +280,8 @@ mod tests {
     #[test]
     fn rejects_wrong_order() {
         let err = parse_and_normalize_back(
-            "iniciante",
-            "EQUIVALENTE\ninescrutável\n\nTRADUÇÃO\nEla olhou para ele.",
+            "beginner",
+            "EQUIVALENTE\ninscrutable\n\nTRADUÇÃO\nShe looked at him.",
         )
         .expect_err("wrong order should fail");
 
@@ -290,27 +290,27 @@ mod tests {
 
     #[test]
     fn rejects_empty_section() {
-        let err = parse_and_normalize_back("avancado", "DEFINITION\n\nSUPPORT\nnone")
+        let err = parse_and_normalize_back("advanced", "DEFINITION\n\nSUPPORT\nnone")
             .expect_err("empty section should fail");
 
-        assert!(err.contains("seção vazia"));
+        assert!(err.contains("empty section"));
     }
 
     #[test]
     fn parses_content_with_trailing_blank_lines() {
         let result = parse_and_normalize_back(
-            "iniciante",
-            "TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou\n\n\n",
+            "beginner",
+            "TRADUÇÃO\nShe looked.\n\nEQUIVALENTE\nlooked\n\n\n",
         )
         .expect("should parse trailing blanks");
 
-        assert_eq!(result, "Ela olhou.\nolhou");
+        assert_eq!(result, "She looked.\nlooked");
     }
 
     #[test]
     fn rewrites_section_content_with_newlines() {
         let result = parse_and_normalize_back(
-            "avancado",
+            "advanced",
             "DEFINITION\nHard to\nunderstand.\n\nSUPPORT\nenigmatic, opaque",
         )
         .expect("should parse multiline");
@@ -322,6 +322,6 @@ mod tests {
     fn rejects_invalid_card_model() {
         let err = parse_and_normalize_back("invalid", "anything").expect_err("should fail");
 
-        assert_eq!(err, "Modelo invalido.");
+        assert_eq!(err, "Invalid model.");
     }
 }

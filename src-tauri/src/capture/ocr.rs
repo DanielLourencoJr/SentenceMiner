@@ -6,17 +6,17 @@ use std::time::SystemTime;
 pub fn ocr_last_screenshot(lang: &str) -> Result<String, String> {
     let dir = screenshots_dir()?;
     let latest = latest_image_file(&dir)
-        .ok_or_else(|| "Nenhum screenshot encontrado em ~/Pictures/Screenshots".to_string())?;
+        .ok_or_else(|| "No screenshot found in ~/Pictures/Screenshots".to_string())?;
 
     let mut lt = leptess::LepTess::new(None, lang).map_err(|e| e.to_string())?;
     if !lt.set_image(latest.to_string_lossy().as_ref()) {
-        return Err("Falha ao carregar imagem para OCR.".to_string());
+        return Err("Failed to load image for OCR.".to_string());
     }
 
     let text = lt.get_utf8_text().map_err(|e| e.to_string())?;
     let cleaned = text.trim().to_string();
     if cleaned.is_empty() {
-        return Err("OCR nao retornou texto.".to_string());
+        return Err("OCR returned no text.".to_string());
     }
     Ok(cleaned)
 }

@@ -11,7 +11,7 @@ async fn generate_back_returns_parsed_content() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "choices": [{
                 "message": {
-                    "content": "TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou"
+                    "content": "TRADUÇÃO\nShe looked.\n\nEQUIVALENTE\nlooked"
                 }
             }]
         })))
@@ -26,13 +26,13 @@ async fn generate_back_returns_parsed_content() {
         "Brazilian Portuguese",
         "She looked.",
         "looked",
-        "iniciante",
+        "beginner",
         30,
     )
     .await
     .expect("should generate back");
 
-    assert_eq!(result, "Ela olhou.\nolhou");
+    assert_eq!(result, "She looked.\nlooked");
 }
 
 #[tokio::test]
@@ -52,7 +52,7 @@ async fn generate_back_returns_error_on_http_failure() {
         "Brazilian Portuguese",
         "Hello.",
         "Hello",
-        "iniciante",
+        "beginner",
         30,
     )
     .await
@@ -80,13 +80,13 @@ async fn generate_back_returns_error_on_empty_choices() {
         "Brazilian Portuguese",
         "Hello.",
         "Hello",
-        "iniciante",
+        "beginner",
         30,
     )
     .await
     .expect_err("should fail");
 
-    assert!(err.contains("vazia"));
+    assert!(err.contains("Empty API response"));
 }
 
 #[tokio::test]
@@ -106,7 +106,7 @@ async fn generate_back_timeout_returns_error() {
         "Brazilian Portuguese",
         "Hello.",
         "Hello",
-        "iniciante",
+        "beginner",
         1,
     )
     .await
