@@ -389,7 +389,7 @@ select:focus,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .dim[hidden] {
