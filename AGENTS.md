@@ -2,7 +2,7 @@
 
 ## Project Structure
 - `src-tauri/`: Rust backend (Tauri v2). Entry: `src-tauri/src/main.rs`. Lib: `src/lib.rs`.
-- `ui/`: frontend HTML/CSS/JS vanilla (no frameworks). Dev server: `python3 dev_server.py` (serves `ui/` at `http://localhost:1420`).
+- `ui/`: frontend HTML/CSS/JS vanilla (no frameworks), embedded in the binary (custom-protocol).
 - `SentenceMiner_Spec.md`: full spec reference for card models, API format, config schema.
 - `legacy-root/`: old project kept for reference, not used by Tauri build.
 
@@ -11,8 +11,15 @@
 # Production binary
 cd src-tauri && cargo tauri build
 
-# Development with hot-reload webview
+# Development with embedded UI (custom-protocol, no dev server needed)
 cargo tauri dev
+# UI edits trigger a rebuild via rerun-if-changed in src-tauri/build.rs.
+
+# Global hotkey (portal) in dev: `cargo tauri dev` has no app-id, so the
+# portal refuses to bind. Test the shortcut by launching the debug binary
+# from the app grid (needs
+# ~/.local/share/applications/com.daniel.sentenceminer.desktop installed).
+# The binary loads embedded UI, no server required.
 ```
 
 If `/tmp` is small:

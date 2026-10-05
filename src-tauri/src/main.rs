@@ -2,8 +2,109 @@ mod anki;
 mod api;
 mod capture;
 mod config;
+mod hotkey;
 
 use serde::Serialize;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager,
+};
+
+fn toggle_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        match window.is_visible() {
+            Ok(true) => {
+                let _ = window.hide();
+            }
+            _ => {
+                let _ = window.show();
+                // Depois do show: janela visível sempre tem um monitor
+                // (oculta, current_monitor pode retornar None).
+                fit_to_monitor(app, &window);
+                let _ = window.set_focus();
+                let _ = app.emit("summon", ());
+            }
+        }
+    }
+}
+
+// Fullscreen de verdade + transparência são incompatíveis no Mutter
+// (janela fullscreen sai do compositor). Em vez disso, dimensionamos
+// uma janela normal para o tamanho exato do monitor: cobre tudo,
+// inclusive a barra superior, e continua composta (alfa funciona).
+fn fit_to_monitor(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    if let Ok(Some(m)) = window.current_monitor() {
+        let s = m.size();
+        return apply_monitor_size(window, "atual", s.width, s.height);
+    }
+    if let Ok(Some(m)) = app.primary_monitor() {
+        let s = m.size();
+        return apply_monitor_size(window, "primário", s.width, s.height);
+    }
+    if let Ok(monitors) = app.available_monitors() {
+        if let Some(m) = monitors.into_iter().next() {
+            let s = m.size();
+            return apply_monitor_size(window, "disponível", s.width, s.height);
+        }
+    }
+    eprintln!("SentenceMiner: nenhum monitor encontrado, mantendo tamanho atual");
+}
+
+fn apply_monitor_size(
+    window: &tauri::WebviewWindow,
+    source: &'static str,
+    width: u32,
+    height: u32,
+) {
+    eprintln!("SentenceMiner: summon em {width}x{height} (monitor {source})");
+    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }));
+    let _ = window.center();
+}
+
+fn load_tray_icon() -> Result<tauri::image::Image<'static>, String> {
+    let bytes = include_bytes!("../icons/32x32.png");
+    let rgba = image::load_from_memory(bytes)
+        .map_err(|e| e.to_string())?
+        .to_rgba8();
+    let (width, height) = (rgba.width(), rgba.height());
+    Ok(tauri::image::Image::new_owned(
+        rgba.into_raw(),
+        width,
+        height,
+    ))
+}
+
+fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let toggle_item = MenuItem::with_id(app, "toggle", "Mostrar/Ocultar", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&toggle_item, &quit_item])?;
+
+    let icon = load_tray_icon()?;
+
+    TrayIconBuilder::new()
+        .icon(icon)
+        .tooltip("SentenceMiner")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "toggle" => toggle_main_window(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                toggle_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
 
 #[tauri::command]
 async fn capture_selection() -> Result<String, String> {
@@ -102,6 +203,13 @@ async fn generate_back(
     .await
 }
 
+#[tauri::command]
+fn dismiss(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
 #[derive(Serialize)]
 struct UiBootstrap {
     default_model: String,
@@ -138,8 +246,17 @@ fn main() {
         }
     };
 
+    let summon_trigger = config.capture.hotkey.clone();
+
     tauri::Builder::default()
         .manage(config)
+        .setup(move |app| {
+            if let Err(e) = build_tray(app.handle()) {
+                eprintln!("Falha ao criar tray icon: {e}");
+            }
+            hotkey::spawn_summon_shortcut(app.handle().clone(), summon_trigger.clone());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             capture_selection,
             capture_ocr_last_screenshot,
@@ -150,7 +267,8 @@ fn main() {
             anki_add_note,
             generate_back,
             get_ui_bootstrap,
-            set_theme
+            set_theme,
+            dismiss
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));

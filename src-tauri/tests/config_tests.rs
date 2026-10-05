@@ -40,6 +40,42 @@ mod config_tests {
     }
 
     #[test]
+    fn default_hotkey_is_super_j() {
+        let config = Config::default();
+        assert_eq!(config.capture.hotkey, "<Super>j");
+    }
+
+    #[test]
+    fn legacy_config_without_hotkey_gets_default() {
+        let toml = r#"
+[general]
+source_language = "English"
+target_language = "Brazilian Portuguese"
+
+[anki]
+host = "localhost"
+port = 8765
+deck = "Default"
+
+[api]
+base_url = "https://api.groq.com/openai/v1"
+api_key = ""
+model = "openai/gpt-oss-120b"
+timeout_seconds = 15
+
+[capture]
+ocr_language = "eng"
+
+[ui]
+default_model = "intermediario"
+default_format_preset = "negrito"
+theme = "light"
+"#;
+        let config: Config = toml::from_str(toml).expect("legacy config parses");
+        assert_eq!(config.capture.hotkey, "<Super>j");
+    }
+
+    #[test]
     fn default_anki_host_is_localhost() {
         let config = Config::default();
         assert_eq!(config.anki.host, "localhost");

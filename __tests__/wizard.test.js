@@ -1,0 +1,53 @@
+import { describe, it, expect } from "vitest";
+import {
+  STEPS,
+  isStep,
+  nextStep,
+  stepAction,
+  stepIndex,
+  stepMeta,
+  usesTextarea,
+} from "@ui/wizard.js";
+
+describe("wizard steps", () => {
+  it("advances sentence -> term -> back -> done", () => {
+    expect(nextStep("sentence")).toBe("term");
+    expect(nextStep("term")).toBe("back");
+    expect(nextStep("back")).toBe("done");
+  });
+
+  it("restarts from unknown step", () => {
+    expect(nextStep("done")).toBe("sentence");
+    expect(nextStep("")).toBe("sentence");
+  });
+
+  it("reports index and validity", () => {
+    expect(stepIndex("sentence")).toBe(0);
+    expect(stepIndex("back")).toBe(2);
+    expect(stepIndex("nope")).toBe(-1);
+    expect(isStep("term")).toBe(true);
+    expect(isStep("done")).toBe(false);
+  });
+
+  it("describes position and label", () => {
+    expect(stepMeta("sentence")).toEqual({
+      label: "Frase",
+      position: 1,
+      total: 3,
+    });
+    expect(stepMeta("back").position).toBe(3);
+    expect(STEPS).toHaveLength(3);
+  });
+
+  it("uses textarea for multiline steps, input for the term", () => {
+    expect(usesTextarea("sentence")).toBe(true);
+    expect(usesTextarea("back")).toBe(true);
+    expect(usesTextarea("term")).toBe(false);
+  });
+
+  it("labels the action button per step", () => {
+    expect(stepAction("sentence")).toBe("Avançar");
+    expect(stepAction("term")).toBe("Gerar verso");
+    expect(stepAction("back")).toBe("Enviar ao Anki");
+  });
+});

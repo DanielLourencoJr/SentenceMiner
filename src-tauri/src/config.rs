@@ -39,6 +39,10 @@ pub struct ApiConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureConfig {
     pub ocr_language: String,
+    // Atalho global no formato de acelerador GTK (ex.: "<Super>j").
+    // Ausente em configs antigas => assume o padrão.
+    #[serde(default = "default_summon_hotkey")]
+    pub hotkey: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,6 +55,10 @@ pub struct UiConfig {
 
 fn default_theme() -> String {
     "light".to_string()
+}
+
+fn default_summon_hotkey() -> String {
+    "<Super>j".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,6 +88,7 @@ impl Default for Config {
             },
             capture: CaptureConfig {
                 ocr_language: "eng".to_string(),
+                hotkey: default_summon_hotkey(),
             },
             ui: UiConfig {
                 default_model: "intermediario".to_string(),
