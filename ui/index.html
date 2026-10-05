@@ -10,21 +10,32 @@
     <div id="dim" class="dim" hidden>
       <div class="summon-card" role="dialog" aria-modal="true" aria-labelledby="field-label">
         <p id="step-indicator" class="eyebrow">1/3 · Frase</p>
-        <label id="field-label" class="label" for="field">Frase</label>
+        <div id="context" class="context" hidden></div>
+        <label id="field-label" class="label" for="field-sentence">Frase</label>
+        <textarea
+          id="field-sentence"
+          class="text-area summon-field"
+          rows="3"
+          spellcheck="false"
+        ></textarea>
         <input
-          id="field"
+          id="field-term"
           class="text-input summon-field"
           autocomplete="off"
           spellcheck="false"
+          hidden
         />
         <textarea
-          id="area"
+          id="field-back"
           class="text-area summon-field"
           rows="5"
           spellcheck="false"
           hidden
         ></textarea>
-        <p class="hint">Enter avança · Shift+Enter quebra linha · Esc cancela</p>
+        <div class="summon-actions">
+          <button id="btn-advance" class="primary-action">Avançar</button>
+        </div>
+        <p class="hint">Ctrl+Enter avança · Enter quebra linha · Esc cancela</p>
         <p id="status" class="status">Status: aguardando...</p>
       </div>
     </div>

@@ -3,6 +3,7 @@ import {
   STEPS,
   isStep,
   nextStep,
+  stepAction,
   stepIndex,
   stepMeta,
   usesTextarea,
@@ -38,9 +39,15 @@ describe("wizard steps", () => {
     expect(STEPS).toHaveLength(3);
   });
 
-  it("uses textarea only for the back step", () => {
+  it("uses textarea for multiline steps, input for the term", () => {
+    expect(usesTextarea("sentence")).toBe(true);
     expect(usesTextarea("back")).toBe(true);
-    expect(usesTextarea("sentence")).toBe(false);
     expect(usesTextarea("term")).toBe(false);
+  });
+
+  it("labels the action button per step", () => {
+    expect(stepAction("sentence")).toBe("Avançar");
+    expect(stepAction("term")).toBe("Gerar verso");
+    expect(stepAction("back")).toBe("Enviar ao Anki");
   });
 });

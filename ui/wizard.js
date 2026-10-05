@@ -6,6 +6,12 @@ const LABELS = {
   back: "Verso",
 };
 
+const ACTIONS = {
+  sentence: "Avançar",
+  term: "Gerar verso",
+  back: "Enviar ao Anki",
+};
+
 export function stepIndex(step) {
   return STEPS.indexOf(step);
 }
@@ -35,7 +41,12 @@ export function stepMeta(step) {
   };
 }
 
-// O passo do verso usa textarea (multilinha); os demais, input simples.
+// Frase e verso aceitam quebra de linha (textarea); só o termo é unilinha.
 export function usesTextarea(step) {
-  return step === "back";
+  return step !== "term";
+}
+
+// Texto do botão de ação de cada passo.
+export function stepAction(step) {
+  return ACTIONS[step] ?? "Avançar";
 }

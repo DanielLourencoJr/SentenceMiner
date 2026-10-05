@@ -5,15 +5,24 @@ import {
 } from "./card.js";
 import { hasTauri, invokeCommand, listenEvent } from "./tauri-api.js";
 import { setStatus } from "./ui-state.js";
-import { nextStep, stepMeta, usesTextarea } from "./wizard.js";
+import { nextStep, stepAction, stepMeta } from "./wizard.js";
 
 const elements = {
   dim: document.getElementById("dim"),
+  context: document.getElementById("context"),
   stepIndicator: document.getElementById("step-indicator"),
   fieldLabel: document.getElementById("field-label"),
-  field: document.getElementById("field"),
-  area: document.getElementById("area"),
+  fieldSentence: document.getElementById("field-sentence"),
+  fieldTerm: document.getElementById("field-term"),
+  fieldBack: document.getElementById("field-back"),
+  btnAdvance: document.getElementById("btn-advance"),
   status: document.getElementById("status"),
+};
+
+const STEP_FIELDS = {
+  sentence: "fieldSentence",
+  term: "fieldTerm",
+  back: "fieldBack",
 };
 
 const state = {
@@ -33,8 +42,12 @@ initializeApp();
 
 function initializeApp() {
   document.addEventListener("keydown", handleGlobalKeydown);
-  elements.field.addEventListener("keydown", handleFieldKeydown);
-  elements.area.addEventListener("keydown", handleFieldKeydown);
+  for (const el of Object.values(fieldElements())) {
+    el.addEventListener("keydown", handleFieldKeydown);
+  }
+  elements.btnAdvance.addEventListener("click", () => {
+    void advance();
+  });
 
   listenEvent("summon", () => {
     void onSummon();
@@ -46,6 +59,18 @@ function initializeApp() {
   }
 
   void loadDefaults();
+}
+
+function fieldElements() {
+  return {
+    fieldSentence: elements.fieldSentence,
+    fieldTerm: elements.fieldTerm,
+    fieldBack: elements.fieldBack,
+  };
+}
+
+function activeField() {
+  return fieldElements()[STEP_FIELDS[state.step]];
 }
 
 async function loadDefaults() {
@@ -101,18 +126,18 @@ async function captureIntoSentence() {
   try {
     const text = await invokeCommand("capture_selection");
     if (!text) {
-      elements.field.value = "";
+      elements.fieldSentence.value = "";
       setStatus(
         elements.status,
-        "Nenhuma seleção detectada. Selecione o texto e pressione Enter para tentar de novo."
+        "Nenhuma seleção detectada. Selecione o texto e pressione Ctrl+Enter para tentar de novo."
       );
-      elements.field.focus();
+      elements.fieldSentence.focus();
       return;
     }
     state.sentence = text;
-    elements.field.value = text;
-    elements.field.select();
-    setStatus(elements.status, "Revise a frase e pressione Enter.");
+    elements.fieldSentence.value = text;
+    elements.fieldSentence.select();
+    setStatus(elements.status, "Revise a frase e avance.");
   } catch (err) {
     setStatus(elements.status, String(err));
   }
@@ -123,37 +148,75 @@ function showStep(step) {
   const meta = stepMeta(step);
   elements.stepIndicator.textContent = `${meta.position}/${meta.total} · ${meta.label}`;
   elements.fieldLabel.textContent = meta.label;
+  elements.btnAdvance.textContent = stepAction(step);
 
-  const useArea = usesTextarea(step);
-  elements.field.hidden = useArea;
-  elements.area.hidden = !useArea;
-
-  if (step === "sentence") {
-    elements.field.value = state.sentence;
-  } else if (step === "term") {
-    elements.field.value = state.term;
-  } else if (step === "back") {
-    elements.area.value = state.back;
+  for (const [key, el] of Object.entries(fieldElements())) {
+    el.hidden = key !== STEP_FIELDS[step];
   }
 
-  activeElement().focus();
+  if (step === "sentence") {
+    elements.fieldSentence.value = state.sentence;
+  } else if (step === "term") {
+    elements.fieldTerm.value = state.term;
+  } else if (step === "back") {
+    elements.fieldBack.value = state.back;
+  }
+
+  renderContext();
+  activeField().focus();
 }
 
-function activeElement() {
-  return usesTextarea(state.step) ? elements.area : elements.field;
+// Mostra as respostas já dadas, para nenhuma etapa parecer "apagada".
+function renderContext() {
+  const lines = [];
+  if (state.step !== "sentence" && state.sentence) {
+    lines.push(["Frase", state.sentence]);
+  }
+  if (state.step === "back" && state.term) {
+    lines.push(["Termo", state.term]);
+  }
+
+  elements.context.replaceChildren();
+  elements.context.hidden = lines.length === 0;
+  for (const [label, text] of lines) {
+    const row = document.createElement("p");
+    row.className = "context-row";
+    const tag = document.createElement("span");
+    tag.className = "context-tag";
+    tag.textContent = label;
+    row.appendChild(tag);
+    row.appendChild(document.createTextNode(text));
+    elements.context.appendChild(row);
+  }
 }
 
 function handleGlobalKeydown(event) {
   if (event.key === "Escape" && !elements.dim.hidden) {
     event.preventDefault();
     void dismiss();
+    return;
+  }
+
+  // Ctrl+Enter avança de qualquer campo, inclusive multilinha.
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    if (!elements.dim.hidden && isFieldFocused()) {
+      event.preventDefault();
+      void advance();
+    }
   }
 }
 
+function isFieldFocused() {
+  return Object.values(fieldElements()).some((el) => el === document.activeElement);
+}
+
 function handleFieldKeydown(event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    void advance();
+  // No input unilinha (termo), Enter avança — não há quebra de linha possível.
+  if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
+    if (document.activeElement === elements.fieldTerm) {
+      event.preventDefault();
+      void advance();
+    }
   }
 }
 
@@ -163,15 +226,15 @@ async function advance() {
   }
 
   if (state.step === "sentence") {
-    const value = elements.field.value.trim();
-    if (!value) {
+    const value = elements.fieldSentence.value;
+    if (!value.trim()) {
       await captureIntoSentence();
       return;
     }
     state.sentence = value;
     showStep(nextStep("sentence"));
   } else if (state.step === "term") {
-    const value = elements.field.value.trim();
+    const value = elements.fieldTerm.value.trim();
     if (!value) {
       setStatus(elements.status, "Digite o termo desconhecido.");
       return;
@@ -179,8 +242,8 @@ async function advance() {
     state.term = value;
     await generateBack();
   } else if (state.step === "back") {
-    const value = elements.area.value.trim();
-    if (!value) {
+    const value = elements.fieldBack.value;
+    if (!value.trim()) {
       setStatus(elements.status, "O verso está vazio.");
       return;
     }
@@ -194,13 +257,13 @@ async function generateBack() {
   setStatus(elements.status, "Gerando verso...");
   try {
     const back = await invokeCommand("generate_back", {
-      sentence: state.sentence,
+      sentence: state.sentence.trim(),
       term: state.term,
       model: state.defaultModel,
     });
     state.back = back;
     showStep("back");
-    setStatus(elements.status, "Revise o verso e pressione Enter para enviar.");
+    setStatus(elements.status, "Revise o verso e avance para enviar.");
   } catch (err) {
     setStatus(elements.status, String(err));
     showStep("term");
@@ -218,11 +281,11 @@ async function sendToAnki() {
       state.defaultPreset
     );
     const front = buildFrontPreviewHtml(
-      state.sentence,
+      state.sentence.trim(),
       state.term,
       presetTemplate
     );
-    const back = renderPlainText(state.back);
+    const back = renderPlainText(state.back.trim());
 
     if (!front) {
       setStatus(elements.status, "A frente do card está vazia.");
