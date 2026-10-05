@@ -376,3 +376,48 @@ select:focus,
     padding: 18px;
   }
 }
+
+/* ─── Summon dialog (fase 2) ─────────────────────────────────────── */
+.summon-body {
+  margin: 0;
+  background: transparent;
+}
+
+.dim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.dim[hidden] {
+  display: none;
+}
+
+.summon-card {
+  width: min(520px, 90vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 22px 24px 16px;
+}
+
+.summon-field {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+.summon-field[hidden] {
+  display: none;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 10px 0 0;
+}

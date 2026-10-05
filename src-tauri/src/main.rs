@@ -5,9 +5,9 @@ mod config;
 
 use serde::Serialize;
 use tauri::{
-    Manager,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager,
 };
 
 fn toggle_main_window(app: &tauri::AppHandle) {
@@ -19,6 +19,7 @@ fn toggle_main_window(app: &tauri::AppHandle) {
             _ => {
                 let _ = window.show();
                 let _ = window.set_focus();
+                let _ = app.emit("summon", ());
             }
         }
     }
@@ -30,7 +31,11 @@ fn load_tray_icon() -> Result<tauri::image::Image<'static>, String> {
         .map_err(|e| e.to_string())?
         .to_rgba8();
     let (width, height) = (rgba.width(), rgba.height());
-    Ok(tauri::image::Image::new_owned(rgba.into_raw(), width, height))
+    Ok(tauri::image::Image::new_owned(
+        rgba.into_raw(),
+        width,
+        height,
+    ))
 }
 
 fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -161,6 +166,13 @@ async fn generate_back(
     .await
 }
 
+#[tauri::command]
+fn dismiss(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
 #[derive(Serialize)]
 struct UiBootstrap {
     default_model: String,
@@ -215,7 +227,8 @@ fn main() {
             anki_add_note,
             generate_back,
             get_ui_bootstrap,
-            set_theme
+            set_theme,
+            dismiss
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));
