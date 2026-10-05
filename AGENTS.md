@@ -11,7 +11,7 @@
 # Production binary
 cd src-tauri && cargo tauri build
 
-# Development with hot-reload webview
+# Development with hot-reload webview (dev server on :1420 auto-starts via beforeDevCommand)
 cargo tauri dev
 ```
 

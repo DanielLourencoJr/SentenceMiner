@@ -157,13 +157,7 @@ sudo apt install \
 
 ### Rodar Em Desenvolvimento
 
-Em um terminal, servir a UI sem cache:
-
-```bash
-python3 dev_server.py
-```
-
-Em outro terminal, iniciar o app Tauri:
+Um comando só (o servidor da UI em `:1420` sobe sozinho via `beforeDevCommand`):
 
 ```bash
 cd src-tauri

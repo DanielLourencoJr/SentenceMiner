@@ -4,6 +4,65 @@ mod capture;
 mod config;
 
 use serde::Serialize;
+use tauri::{
+    Manager,
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+};
+
+fn toggle_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        match window.is_visible() {
+            Ok(true) => {
+                let _ = window.hide();
+            }
+            _ => {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+    }
+}
+
+fn load_tray_icon() -> Result<tauri::image::Image<'static>, String> {
+    let bytes = include_bytes!("../icons/32x32.png");
+    let rgba = image::load_from_memory(bytes)
+        .map_err(|e| e.to_string())?
+        .to_rgba8();
+    let (width, height) = (rgba.width(), rgba.height());
+    Ok(tauri::image::Image::new_owned(rgba.into_raw(), width, height))
+}
+
+fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let toggle_item = MenuItem::with_id(app, "toggle", "Mostrar/Ocultar", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&toggle_item, &quit_item])?;
+
+    let icon = load_tray_icon()?;
+
+    TrayIconBuilder::new()
+        .icon(icon)
+        .tooltip("SentenceMiner")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "toggle" => toggle_main_window(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                toggle_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
 
 #[tauri::command]
 async fn capture_selection() -> Result<String, String> {
@@ -140,6 +199,12 @@ fn main() {
 
     tauri::Builder::default()
         .manage(config)
+        .setup(|app| {
+            if let Err(e) = build_tray(app.handle()) {
+                eprintln!("Falha ao criar tray icon: {e}");
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             capture_selection,
             capture_ocr_last_screenshot,
