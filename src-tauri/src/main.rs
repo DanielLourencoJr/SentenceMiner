@@ -17,11 +17,29 @@ fn toggle_main_window(app: &tauri::AppHandle) {
                 let _ = window.hide();
             }
             _ => {
+                fit_to_monitor(app, &window);
                 let _ = window.show();
                 let _ = window.set_focus();
                 let _ = app.emit("summon", ());
             }
         }
+    }
+}
+
+// Fullscreen de verdade + transparência são incompatíveis no Mutter
+// (janela fullscreen sai do compositor). Em vez disso, dimensionamos
+// uma janela normal para o tamanho exato do monitor: cobre tudo,
+// inclusive a barra superior, e continua composta (alfa funciona).
+fn fit_to_monitor(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    let monitor = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| app.primary_monitor().ok().flatten());
+    if let Some(monitor) = monitor {
+        let size = *monitor.size();
+        let _ = window.set_size(tauri::Size::Physical(size));
+        let _ = window.center();
     }
 }
 

@@ -12,7 +12,8 @@
     "windows": [
       {
         "title": "SentenceMiner",
-        "fullscreen": true,
+        "width": 800,
+        "height": 600,
         "transparent": true,
         "decorations": false,
         "skipTaskbar": true,
