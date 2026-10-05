@@ -177,8 +177,6 @@ export CARGO_TARGET_DIR=/media/<disk>/sentenceminer-target
 - Current text capture depends on the PRIMARY selection; it does not use the regular clipboard as fallback.
 - Current OCR does not capture a screen region live. It only reads the latest screenshot from `~/Pictures/Screenshots`.
 - Front term formatting depends on simple literal matching with `indexOf`, using the first occurrence found.
-- Config files written by older versions may carry legacy Portuguese identifiers (`intermediario`, `negrito`, ...); update them to the English ids (`intermediate`, `bold`, ...) — unknown model ids fail with "Invalid model.".
-
 ## Repository Structure
 
 - `src-tauri/`: Rust/Tauri backend.
