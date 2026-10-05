@@ -12,7 +12,7 @@
     "windows": [
       {
         "title": "SentenceMiner",
-        "maximized": true,
+        "fullscreen": true,
         "transparent": true,
         "decorations": false,
         "skipTaskbar": true,
