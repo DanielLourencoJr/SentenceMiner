@@ -48,6 +48,20 @@ npm test
   apt install tesseract-ocr libtesseract-dev libleptonica-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
   ```
 
+## Pull Request Checklist
+
+Work on feature branches, merge into `main` via PR. CI (`ci.yml`) runs
+fmt, clippy (`-D warnings`), Rust tests, JS tests and the Linux build —
+all must be green. Before opening a PR, run locally from repo root:
+
+```bash
+cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cd .. && npm test
+```
+
+Plus: `node_modules/` must never exist inside `ui/`; no secrets in
+commits (`api_key` lives only in `~/.config/sentenceminer/config.toml`).
+
 ## Platform Quirks
 - Global hotkey (`Ctrl+Shift+S`) requires `ashpd` (xdg-desktop-portal). Works on GNOME 48+ / KDE Plasma. On GNOME 46 (Ubuntu 24.04) the hotkey is unavailable; use UI capture buttons instead.
 - Gdk/pen display can crash in release mode on Wayland.

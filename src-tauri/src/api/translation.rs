@@ -105,6 +105,9 @@ fn provider_error_message(status: reqwest::StatusCode, body: &str) -> String {
     }
 }
 
+// Nove args espelham 1:1 os campos de config + inputs do comando Tauri;
+// agrupar em struct só moveria a verbosidade para o call-site.
+#[allow(clippy::too_many_arguments)]
 pub async fn generate_back(
     base_url: &str,
     api_key: &str,
@@ -116,13 +119,8 @@ pub async fn generate_back(
     card_model: &str,
     timeout_seconds: u64,
 ) -> Result<String, String> {
-    let prompt = prompts::build_prompt(
-        card_model,
-        source_language,
-        target_language,
-        sentence,
-        term,
-    )?;
+    let prompt =
+        prompts::build_prompt(card_model, source_language, target_language, sentence, term)?;
 
     let req = build_chat_request(model, &prompt);
 
@@ -154,7 +152,7 @@ fn parse_api_response(body_text: &str, card_model: &str) -> Result<String, Strin
     let body: ChatResponse = serde_json::from_str(body_text).map_err(|e| e.to_string())?;
     let content = body
         .choices
-        .get(0)
+        .first()
         .map(|c| c.message.content.trim().to_string())
         .ok_or_else(|| "Resposta vazia da API.".to_string())?;
 
@@ -213,25 +211,30 @@ mod tests {
     #[test]
     fn url_with_long_base_url() {
         let url = build_url("https://custom-api.example.com/v1/openai");
-        assert_eq!(url, "https://custom-api.example.com/v1/openai/chat/completions");
+        assert_eq!(
+            url,
+            "https://custom-api.example.com/v1/openai/chat/completions"
+        );
     }
 
     // ─── parse_api_response ───────────────────────────────────────────
 
     fn sample_beginner_response() -> String {
-        r#"{"choices":[{"message":{"content":"TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou"}}]}"#.to_string()
+        r#"{"choices":[{"message":{"content":"TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou"}}]}"#
+            .to_string()
     }
 
     #[test]
     fn parses_valid_api_response() {
-        let result = parse_api_response(&sample_beginner_response(), "iniciante")
-            .expect("should parse");
+        let result =
+            parse_api_response(&sample_beginner_response(), "iniciante").expect("should parse");
         assert_eq!(result, "Ela olhou.\nolhou");
     }
 
     #[test]
     fn parses_response_with_extra_whitespace_in_content() {
-        let json = r#"{"choices":[{"message":{"content":"  TRADUÇÃO\n  Olá.\n\nEQUIVALENTE\n  olá  "}}]}"#;
+        let json =
+            r#"{"choices":[{"message":{"content":"  TRADUÇÃO\n  Olá.\n\nEQUIVALENTE\n  olá  "}}]}"#;
         let result = parse_api_response(json, "iniciante").expect("should parse");
         assert_eq!(result, "Olá.\nolá");
     }

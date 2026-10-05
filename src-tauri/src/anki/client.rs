@@ -26,7 +26,8 @@ impl AnkiClient {
             params: None,
         };
         let resp: AnkiResponse<u16> = self.post(req).await?;
-        resp.result.ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
     }
 
     pub async fn get_deck_names(&self) -> Result<Vec<String>, String> {
@@ -36,7 +37,8 @@ impl AnkiClient {
             params: None,
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
-        resp.result.ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
     }
 
     pub async fn get_model_names(&self) -> Result<Vec<String>, String> {
@@ -46,7 +48,8 @@ impl AnkiClient {
             params: None,
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
-        resp.result.ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
     }
 
     pub async fn get_model_field_names(&self, model: &str) -> Result<Vec<String>, String> {
@@ -64,7 +67,8 @@ impl AnkiClient {
             params: Some(params),
         };
         let resp: AnkiResponse<Vec<String>> = self.post(req).await?;
-        resp.result.ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
     }
 
     pub async fn add_note(
@@ -87,7 +91,8 @@ impl AnkiClient {
             params: Some(params),
         };
         let resp: AnkiResponse<i64> = self.post(req).await?;
-        resp.result.ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("Erro AnkiConnect.".to_string()))
     }
 
     async fn post<T: Serialize, R: for<'de> Deserialize<'de>>(
@@ -145,12 +150,18 @@ mod tests {
     #[test]
     fn builds_url_from_host_and_port() {
         assert_eq!(build_anki_url("localhost", 8765), "http://localhost:8765");
-        assert_eq!(build_anki_url("192.168.1.1", 8765), "http://192.168.1.1:8765");
+        assert_eq!(
+            build_anki_url("192.168.1.1", 8765),
+            "http://192.168.1.1:8765"
+        );
     }
 
     #[test]
     fn builds_url_with_different_host() {
-        assert_eq!(build_anki_url("anki-server.local", 8765), "http://anki-server.local:8765");
+        assert_eq!(
+            build_anki_url("anki-server.local", 8765),
+            "http://anki-server.local:8765"
+        );
     }
 
     #[test]
@@ -200,7 +211,8 @@ mod tests {
     #[test]
     fn deserializes_error_response() {
         let json = r#"{"result": null, "error": "deck not found"}"#;
-        let resp: AnkiResponse<serde_json::Value> = serde_json::from_str(json).expect("deserialize");
+        let resp: AnkiResponse<serde_json::Value> =
+            serde_json::from_str(json).expect("deserialize");
         assert!(resp.result.is_none());
         assert_eq!(resp.error.unwrap(), "deck not found");
     }
@@ -209,7 +221,10 @@ mod tests {
     fn deserializes_array_result() {
         let json = r#"{"result": ["Default", "English"], "error": null}"#;
         let resp: AnkiResponse<Vec<String>> = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(resp.result.unwrap(), vec!["Default".to_string(), "English".to_string()]);
+        assert_eq!(
+            resp.result.unwrap(),
+            vec!["Default".to_string(), "English".to_string()]
+        );
     }
 
     #[test]
