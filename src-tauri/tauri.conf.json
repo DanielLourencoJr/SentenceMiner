@@ -5,8 +5,7 @@
   "identifier": "com.daniel.sentenceminer",
   "build": {
     "frontendDist": "../ui",
-    "devUrl": "http://localhost:1420/index.html",
-    "beforeDevCommand": "python3 dev_server.py"
+    "devUrl": "http://localhost:1420/index.html"
   },
   "app": {
     "windows": [

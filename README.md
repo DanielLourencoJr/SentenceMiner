@@ -157,7 +157,7 @@ sudo apt install \
 
 ### Rodar Em Desenvolvimento
 
-Um comando só (o servidor da UI em `:1420` sobe sozinho via `beforeDevCommand`):
+Um comando só (a UI vai embarcada no binário, sem servidor):
 
 ```bash
 cd src-tauri
@@ -181,7 +181,6 @@ export CARGO_TARGET_DIR=/media/<disk>/sentenceminer-target
 ## Estrutura Do Repositório
 
 - `src-tauri/`: backend Rust/Tauri.
-- `ui/`: frontend HTML/CSS/JS.
-- `dev_server.py`: servidor local sem cache para a UI.
+- `ui/`: frontend HTML/CSS/JS (embarcado no binário).
 - `SentenceMiner_Spec.md`: especificação inicial, hoje parcialmente divergente do código.
 - `legacy-root/`: projeto antigo mantido apenas como referência.
