@@ -1,10 +1,10 @@
 fn main() {
     tauri_build::build();
 
-    // A UI é embarcada no binário (custom-protocol, sem devUrl). Sem isto,
-    // editar ui/ não recompila a crate e o binário serve HTML velho.
-    // Lista arquivos (não o diretório: cargo só olha mtime de diretório,
-    // que não muda ao editar conteúdo).
+    // The UI is embedded into the binary (custom-protocol, no devUrl). Without this,
+    // editing ui/ would not recompile the crate and the binary would serve stale HTML.
+    // List files (not the directory: cargo only looks at directory mtime,
+    // which does not change when contents are edited).
     watch_dir_all_files("../ui");
 }
 

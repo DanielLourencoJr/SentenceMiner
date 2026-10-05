@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,8 +9,8 @@
   <body class="summon-body">
     <div id="dim" class="dim" hidden>
       <div class="summon-card" role="dialog" aria-modal="true" aria-labelledby="field-label">
-        <p id="step-indicator" class="eyebrow">1/3 · Frase</p>
-        <label id="field-label" class="label" for="field-sentence">Frase</label>
+        <p id="step-indicator" class="eyebrow">1/3 · Sentence</p>
+        <label id="field-label" class="label" for="field-sentence">Sentence</label>
         <div id="front-preview" class="front-preview" hidden></div>
         <textarea
           id="field-sentence"
@@ -33,10 +33,10 @@
           hidden
         ></textarea>
         <div class="summon-actions">
-          <button id="btn-advance" class="primary-action">Avançar</button>
+          <button id="btn-advance" class="primary-action">Next</button>
         </div>
-        <p class="hint">Ctrl+Enter avança · Enter quebra linha · Esc cancela</p>
-        <p id="status" class="status">Status: aguardando...</p>
+        <p class="hint">Ctrl+Enter advances · Enter inserts a line break · Esc cancels</p>
+        <p id="status" class="status">Status: waiting...</p>
       </div>
     </div>
     <script type="module" src="main.js"></script>

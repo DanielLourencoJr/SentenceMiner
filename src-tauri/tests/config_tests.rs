@@ -67,8 +67,8 @@ timeout_seconds = 15
 ocr_language = "eng"
 
 [ui]
-default_model = "intermediario"
-default_format_preset = "negrito"
+default_model = "intermediate"
+default_format_preset = "bold"
 theme = "light"
 "#;
         let config: Config = toml::from_str(toml).expect("legacy config parses");
@@ -100,15 +100,15 @@ theme = "light"
     }
 
     #[test]
-    fn default_ui_model_is_intermediario() {
+    fn default_ui_model_is_intermediate() {
         let config = Config::default();
-        assert_eq!(config.ui.default_model, "intermediario");
+        assert_eq!(config.ui.default_model, "intermediate");
     }
 
     #[test]
-    fn default_ui_preset_is_negrito() {
+    fn default_ui_preset_is_bold() {
         let config = Config::default();
-        assert_eq!(config.ui.default_format_preset, "negrito");
+        assert_eq!(config.ui.default_format_preset, "bold");
     }
 
     #[test]
@@ -118,28 +118,25 @@ theme = "light"
     }
 
     #[test]
-    fn default_format_preset_negrito_contains_term_placeholder() {
+    fn default_format_preset_bold_contains_term_placeholder() {
         let config = Config::default();
-        let preset = config.format_presets.iter().find(|p| p.name == "negrito");
+        let preset = config.format_presets.iter().find(|p| p.name == "bold");
         assert!(preset.is_some());
         assert!(preset.unwrap().template.contains("{term}"));
     }
 
     #[test]
-    fn default_format_preset_laranja_has_orange_color() {
+    fn default_format_preset_orange_has_orange_color() {
         let config = Config::default();
-        let preset = config.format_presets.iter().find(|p| p.name == "laranja");
+        let preset = config.format_presets.iter().find(|p| p.name == "orange");
         assert!(preset.is_some());
         assert!(preset.unwrap().template.contains("color: #f59e0b"));
     }
 
     #[test]
-    fn default_format_preset_sublinhado_uses_u_tag() {
+    fn default_format_preset_underline_uses_u_tag() {
         let config = Config::default();
-        let preset = config
-            .format_presets
-            .iter()
-            .find(|p| p.name == "sublinhado");
+        let preset = config.format_presets.iter().find(|p| p.name == "underline");
         assert!(preset.is_some());
         assert!(preset.unwrap().template.contains("<u>"));
     }
@@ -233,8 +230,8 @@ timeout_seconds = 30
 ocr_language = "jpn"
 
 [ui]
-default_model = "avancado"
-default_format_preset = "laranja"
+default_model = "advanced"
+default_format_preset = "orange"
 theme = "dark"
 "#;
             fs::write(&config_path, custom_toml).expect("write config");
@@ -247,8 +244,8 @@ theme = "dark"
             assert_eq!(config.api.model, "custom-model");
             assert_eq!(config.api.timeout_seconds, 30);
             assert_eq!(config.capture.ocr_language, "jpn");
-            assert_eq!(config.ui.default_model, "avancado");
-            assert_eq!(config.ui.default_format_preset, "laranja");
+            assert_eq!(config.ui.default_model, "advanced");
+            assert_eq!(config.ui.default_format_preset, "orange");
             assert_eq!(config.ui.theme, "dark");
         });
     }
@@ -258,7 +255,7 @@ theme = "dark"
         with_temp_home(|_| {
             let config = config::load_or_create().expect("load or create");
             assert_eq!(config.general.source_language, "English");
-            assert_eq!(config.ui.default_model, "intermediario");
+            assert_eq!(config.ui.default_model, "intermediate");
         });
     }
 

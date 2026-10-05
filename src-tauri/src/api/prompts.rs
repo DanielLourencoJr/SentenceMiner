@@ -1,6 +1,6 @@
-const INICIANTE_TEMPLATE: &str = include_str!("prompts/iniciante.txt");
-const INTERMEDIARIO_TEMPLATE: &str = include_str!("prompts/intermediario.txt");
-const AVANCADO_TEMPLATE: &str = include_str!("prompts/avancado.txt");
+const BEGINNER_TEMPLATE: &str = include_str!("prompts/beginner.txt");
+const INTERMEDIATE_TEMPLATE: &str = include_str!("prompts/intermediate.txt");
+const ADVANCED_TEMPLATE: &str = include_str!("prompts/advanced.txt");
 
 pub fn build_prompt(
     card_model: &str,
@@ -10,10 +10,10 @@ pub fn build_prompt(
     term: &str,
 ) -> Result<String, String> {
     let template = match card_model {
-        "iniciante" => INICIANTE_TEMPLATE,
-        "intermediario" => INTERMEDIARIO_TEMPLATE,
-        "avancado" => AVANCADO_TEMPLATE,
-        _ => return Err("Modelo invalido.".to_string()),
+        "beginner" => BEGINNER_TEMPLATE,
+        "intermediate" => INTERMEDIATE_TEMPLATE,
+        "advanced" => ADVANCED_TEMPLATE,
+        _ => return Err("Invalid model.".to_string()),
     };
 
     Ok(render_template(
@@ -97,7 +97,7 @@ mod tests {
     #[test]
     fn renders_beginner_prompt_from_template() {
         let prompt = build_prompt(
-            "iniciante",
+            "beginner",
             "English",
             "Brazilian Portuguese",
             "She looked at him with an inscrutable expression.",
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn renders_intermediate_prompt_with_correct_sections() {
         let prompt = build_prompt(
-            "intermediario",
+            "intermediate",
             "English",
             "Brazilian Portuguese",
             "The view was breathtaking.",
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn renders_advanced_prompt_with_consistent_sections() {
         let prompt = build_prompt(
-            "avancado",
+            "advanced",
             "English",
             "Brazilian Portuguese",
             "The result was negligible.",
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn renders_prompt_with_empty_sentence() {
-        let prompt = build_prompt("iniciante", "English", "Portuguese", "", "word")
+        let prompt = build_prompt("beginner", "English", "Portuguese", "", "word")
             .expect("prompt should render");
 
         assert!(prompt.contains("Sentence: \"\""));
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn renders_prompt_with_empty_term() {
-        let prompt = build_prompt("iniciante", "English", "Portuguese", "A sentence.", "")
+        let prompt = build_prompt("beginner", "English", "Portuguese", "A sentence.", "")
             .expect("prompt should render");
 
         assert!(prompt.contains("Sentence: \"A sentence.\""));
@@ -172,6 +172,6 @@ mod tests {
         let err = build_prompt("foo", "English", "Portuguese", "test", "word")
             .expect_err("invalid model should fail");
 
-        assert_eq!(err, "Modelo invalido.");
+        assert_eq!(err, "Invalid model.");
     }
 }

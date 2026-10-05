@@ -39,8 +39,8 @@ pub struct ApiConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureConfig {
     pub ocr_language: String,
-    // Atalho global no formato de acelerador GTK (ex.: "<Super>j").
-    // Ausente em configs antigas => assume o padrão.
+    // Global hotkey in GTK accelerator format (e.g. "<Super>j").
+    // Missing in legacy configs => falls back to the default.
     #[serde(default = "default_summon_hotkey")]
     pub hotkey: String,
 }
@@ -91,21 +91,21 @@ impl Default for Config {
                 hotkey: default_summon_hotkey(),
             },
             ui: UiConfig {
-                default_model: "intermediario".to_string(),
-                default_format_preset: "negrito".to_string(),
+                default_model: "intermediate".to_string(),
+                default_format_preset: "bold".to_string(),
                 theme: "light".to_string(),
             },
             format_presets: vec![
                 FormatPreset {
-                    name: "negrito".to_string(),
+                    name: "bold".to_string(),
                     template: "<b>{term}</b>".to_string(),
                 },
                 FormatPreset {
-                    name: "laranja".to_string(),
+                    name: "orange".to_string(),
                     template: "<b style=\"color: #f59e0b\">{term}</b>".to_string(),
                 },
                 FormatPreset {
-                    name: "sublinhado".to_string(),
+                    name: "underline".to_string(),
                     template: "<u>{term}</u>".to_string(),
                 },
             ],

@@ -32,8 +32,8 @@ const state = {
   back: "",
   formatPresets: [],
   defaultDeck: "",
-  defaultModel: "intermediario",
-  defaultPreset: "negrito",
+  defaultModel: "intermediate",
+  defaultPreset: "bold",
   noteType: "Basic",
   busy: false,
 };
@@ -55,7 +55,7 @@ function initializeApp() {
   });
 
   if (!hasTauri()) {
-    setStatus(elements.status, "Tauri API não encontrada.");
+    setStatus(elements.status, "Tauri API not found.");
     return;
   }
 
@@ -84,7 +84,7 @@ async function loadDefaults() {
       bootstrap.default_format_preset || state.defaultPreset;
     applyTheme(bootstrap.theme || "light");
   } catch (err) {
-    setStatus(elements.status, `Erro ao carregar config: ${String(err)}`);
+    setStatus(elements.status, `Error loading config: ${String(err)}`);
   }
 
   try {
@@ -93,18 +93,18 @@ async function loadDefaults() {
       state.noteType = models[0];
     }
   } catch {
-    // Anki fechado: mantém "Basic", o erro aparece no envio.
+    // Anki closed: keep "Basic", the error surfaces at send time.
   }
 
   try {
     const decks = await invokeCommand("anki_get_deck_names");
     if (state.defaultDeck && decks.includes(state.defaultDeck)) {
-      // mantém o padrão
+      // keep the default
     } else if (decks.length > 0) {
       state.defaultDeck = decks[0];
     }
   } catch {
-    // Anki fechado: mantém o padrão do config.
+    // Anki closed: keep the config default.
   }
 }
 
@@ -123,14 +123,14 @@ async function onSummon() {
 }
 
 async function captureIntoSentence() {
-  setStatus(elements.status, "Capturando seleção...");
+  setStatus(elements.status, "Capturing selection...");
   try {
     const text = await invokeCommand("capture_selection");
     if (!text) {
       elements.fieldSentence.value = "";
       setStatus(
         elements.status,
-        "Nenhuma seleção detectada. Selecione o texto e pressione Ctrl+Enter para tentar de novo."
+        "No selection detected. Select the text and press Ctrl+Enter to retry."
       );
       elements.fieldSentence.focus();
       return;
@@ -138,7 +138,7 @@ async function captureIntoSentence() {
     state.sentence = text;
     elements.fieldSentence.value = text;
     elements.fieldSentence.select();
-    setStatus(elements.status, "Revise a frase e avance.");
+    setStatus(elements.status, "Review the sentence, then advance.");
   } catch (err) {
     setStatus(elements.status, String(err));
   }
@@ -170,8 +170,8 @@ function showStep(step) {
   activeField().focus();
 }
 
-// A frente estilizada (preset do usuário) É a exibição da frase nas
-// etapas 2 e 3 — atualizada a cada tecla do termo, sem duplicar texto.
+// The styled front (user preset) IS the sentence display on steps
+// 2 and 3 — updated on every keystroke of the term, no duplicated text.
 function updateFrontPreview() {
   const presetTemplate = getPresetTemplate(
     state.formatPresets,
@@ -192,7 +192,7 @@ function handleGlobalKeydown(event) {
     return;
   }
 
-  // Ctrl+Enter avança de qualquer campo, inclusive multilinha.
+  // Ctrl+Enter advances from any field, including multiline ones.
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     if (!elements.dim.hidden && isFieldFocused()) {
       event.preventDefault();
@@ -206,7 +206,7 @@ function isFieldFocused() {
 }
 
 function handleFieldKeydown(event) {
-  // No input unilinha (termo), Enter avança — não há quebra de linha possível.
+  // In the single-line input (term), Enter advances — no line break possible.
   if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
     if (document.activeElement === elements.fieldTerm) {
       event.preventDefault();
@@ -231,7 +231,7 @@ async function advance() {
   } else if (state.step === "term") {
     const value = elements.fieldTerm.value.trim();
     if (!value) {
-      setStatus(elements.status, "Digite o termo desconhecido.");
+      setStatus(elements.status, "Type the unknown term.");
       return;
     }
     state.term = value;
@@ -239,7 +239,7 @@ async function advance() {
   } else if (state.step === "back") {
     const value = elements.fieldBack.value;
     if (!value.trim()) {
-      setStatus(elements.status, "O verso está vazio.");
+      setStatus(elements.status, "The back is empty.");
       return;
     }
     state.back = value;
@@ -249,7 +249,7 @@ async function advance() {
 
 async function generateBack() {
   state.busy = true;
-  setStatus(elements.status, "Gerando verso...");
+  setStatus(elements.status, "Generating back...");
   try {
     const back = await invokeCommand("generate_back", {
       sentence: state.sentence.trim(),
@@ -258,7 +258,7 @@ async function generateBack() {
     });
     state.back = back;
     showStep("back");
-    setStatus(elements.status, "Revise o verso e avance para enviar.");
+    setStatus(elements.status, "Review the back, then advance to send.");
   } catch (err) {
     setStatus(elements.status, String(err));
     showStep("term");
@@ -269,7 +269,7 @@ async function generateBack() {
 
 async function sendToAnki() {
   state.busy = true;
-  setStatus(elements.status, "Enviando para o Anki...");
+  setStatus(elements.status, "Sending to Anki...");
   try {
     const presetTemplate = getPresetTemplate(
       state.formatPresets,
@@ -283,11 +283,11 @@ async function sendToAnki() {
     const back = renderPlainText(state.back.trim());
 
     if (!front) {
-      setStatus(elements.status, "A frente do card está vazia.");
+      setStatus(elements.status, "The card front is empty.");
       return;
     }
     if (!state.defaultDeck) {
-      setStatus(elements.status, "Nenhum baralho disponível (Anki aberto?).");
+      setStatus(elements.status, "No deck available (Anki open?).");
       return;
     }
 
@@ -298,7 +298,7 @@ async function sendToAnki() {
       deck: state.defaultDeck,
     });
 
-    setStatus(elements.status, `✓ Nota adicionada (ID ${noteId}).`);
+    setStatus(elements.status, `✓ Note added (ID ${noteId}).`);
     window.setTimeout(() => {
       void dismiss();
     }, 900);

@@ -67,30 +67,30 @@ describe("renderPlainText", () => {
 
 describe("getPresetTemplate", () => {
   const presets = [
-    { name: "negrito", template: "<b>{term}</b>" },
-    { name: "laranja", template: '<span style="color:#e05c00">{term}</span>' },
+    { name: "bold", template: "<b>{term}</b>" },
+    { name: "orange", template: '<span style="color:#e05c00">{term}</span>' },
   ];
 
   it("returns template for known preset name", () => {
-    expect(getPresetTemplate(presets, "negrito")).toBe("<b>{term}</b>");
+    expect(getPresetTemplate(presets, "bold")).toBe("<b>{term}</b>");
   });
 
   it("returns template for another known preset", () => {
-    expect(getPresetTemplate(presets, "laranja")).toBe(
+    expect(getPresetTemplate(presets, "orange")).toBe(
       '<span style="color:#e05c00">{term}</span>',
     );
   });
 
   it("returns default template for unknown name", () => {
-    expect(getPresetTemplate(presets, "sublinhado")).toBe("{term}");
+    expect(getPresetTemplate(presets, "underline")).toBe("{term}");
   });
 
   it("returns default template for empty presets array", () => {
-    expect(getPresetTemplate([], "negrito")).toBe("{term}");
+    expect(getPresetTemplate([], "bold")).toBe("{term}");
   });
 
   it("returns default template for case mismatch", () => {
-    expect(getPresetTemplate(presets, "Negrito")).toBe("{term}");
+    expect(getPresetTemplate(presets, "Bold")).toBe("{term}");
   });
 });
 

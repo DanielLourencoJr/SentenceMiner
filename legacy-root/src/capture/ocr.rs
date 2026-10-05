@@ -3,5 +3,5 @@ pub struct OcrResult {
 }
 
 pub fn capture_region_and_ocr() -> Result<OcrResult, String> {
-    Err("OCR ainda nao implementado".to_string())
+    Err("OCR not implemented yet".to_string())
 }

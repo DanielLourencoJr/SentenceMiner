@@ -1,11 +1,11 @@
-// Atalho global (Ctrl+Shift+S) para invocar o diálogo via portal
-// org.freedesktop.portal.GlobalShortcuts (ashpd).
+// Global shortcut to summon the dialog via the
+// org.freedesktop.portal.GlobalShortcuts portal (ashpd).
 //
-// Por que portal e não o plugin de atalho do Tauri? O plugin usa a crate
-// `global-hotkey`, que no Linux só funciona em X11. No Wayland o compositor
-// não permite que apps capturem teclas globais: o único caminho é pedir ao
-// portal, que mostra um diálogo de consentimento do sistema e entrega o
-// atalho. Sem portal (ou sem consentimento), o app segue só com o tray.
+// Why the portal instead of Tauri's shortcut plugin? The plugin uses the
+// `global-hotkey` crate, which on Linux only works on X11. On Wayland the
+// compositor does not let apps capture global keys: the only path is asking
+// the portal, which shows a system consent dialog and hands over the
+// shortcut. Without a portal (or without consent), the app stays tray-only.
 
 use ashpd::desktop::{
     global_shortcuts::{BindShortcutsOptions, GlobalShortcuts, NewShortcut},
@@ -18,7 +18,7 @@ const SUMMON_SHORTCUT_ID: &str = "summon";
 pub fn spawn_summon_shortcut(app: tauri::AppHandle, trigger: String) {
     tauri::async_runtime::spawn(async move {
         if let Err(e) = run_hotkey_loop(app, &trigger).await {
-            eprintln!("SentenceMiner: atalho global indisponível ({e}); use o tray.");
+            eprintln!("SentenceMiner: global shortcut unavailable ({e}); use the tray.");
         }
     });
 }
@@ -30,12 +30,12 @@ async fn run_hotkey_loop(app: tauri::AppHandle, trigger: &str) -> Result<(), ash
         .await?;
 
     let shortcut =
-        NewShortcut::new(SUMMON_SHORTCUT_ID, "Invocar SentenceMiner").preferred_trigger(trigger);
+        NewShortcut::new(SUMMON_SHORTCUT_ID, "Summon SentenceMiner").preferred_trigger(trigger);
     let request = proxy
         .bind_shortcuts(&session, &[shortcut], None, BindShortcutsOptions::default())
         .await?;
     let _bound = request.response()?;
-    eprintln!("SentenceMiner: atalho global ativo ({trigger}).");
+    eprintln!("SentenceMiner: global shortcut active ({trigger}).");
 
     let mut activated = proxy.receive_activated().await?;
     while let Some(signal) = activated.next().await {

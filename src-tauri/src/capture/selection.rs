@@ -10,8 +10,8 @@ pub fn read_primary_selection() -> Result<String, String> {
             .map_err(|e| e.to_string());
         let primary = primary.unwrap_or_default();
 
-        // Heuristica: em alguns ambientes (ex. Wayland) PRIMARY pode espelhar o CLIPBOARD.
-        // Se PRIMARY == CLIPBOARD, tratamos como "sem selecao" para evitar usar clipboard.
+        // Heuristic: on some environments (e.g. Wayland) PRIMARY may mirror CLIPBOARD.
+        // If PRIMARY == CLIPBOARD, treat it as "no selection" to avoid using the clipboard.
         let clipboard_text = clipboard
             .get()
             .clipboard(LinuxClipboardKind::Clipboard)

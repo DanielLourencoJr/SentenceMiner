@@ -81,32 +81,32 @@ fn provider_error_message(status: reqwest::StatusCode, body: &str) -> String {
 
     if looks_like_model_error {
         let detail = if api_msg.is_empty() {
-            "sem detalhes do provedor".to_string()
+            "no provider details".to_string()
         } else {
             api_msg
         };
         return format!(
-            "O modelo configurado foi desativado pelo provedor ({detail}). \
-             Atualize o campo `model` em ~/.config/sentenceminer/config.toml \
-             (ex.: \"openai/gpt-oss-120b\") e reinicie o app."
+            "The configured model was retired by the provider ({detail}). \
+             Update the `model` field in ~/.config/sentenceminer/config.toml \
+             (e.g. \"openai/gpt-oss-120b\") and restart the app."
         );
     }
 
     if status == reqwest::StatusCode::UNAUTHORIZED {
-        return "API key rejeitada (401). Confira o campo `api_key` em \
+        return "API key rejected (401). Check the `api_key` field in \
                 ~/.config/sentenceminer/config.toml."
             .to_string();
     }
 
     if api_msg.is_empty() {
-        format!("Erro HTTP: {status}")
+        format!("HTTP error: {status}")
     } else {
-        format!("Erro HTTP: {status} — {api_msg}")
+        format!("HTTP error: {status} — {api_msg}")
     }
 }
 
-// Nove args espelham 1:1 os campos de config + inputs do comando Tauri;
-// agrupar em struct só moveria a verbosidade para o call-site.
+// Nine args mirror 1:1 the config fields + Tauri command inputs;
+// grouping them in a struct would just move verbosity to the call site.
 #[allow(clippy::too_many_arguments)]
 pub async fn generate_back(
     base_url: &str,
@@ -154,7 +154,7 @@ fn parse_api_response(body_text: &str, card_model: &str) -> Result<String, Strin
         .choices
         .first()
         .map(|c| c.message.content.trim().to_string())
-        .ok_or_else(|| "Resposta vazia da API.".to_string())?;
+        .ok_or_else(|| "Empty API response.".to_string())?;
 
     response_parser::parse_and_normalize_back(card_model, &content)
 }
@@ -220,43 +220,42 @@ mod tests {
     // ─── parse_api_response ───────────────────────────────────────────
 
     fn sample_beginner_response() -> String {
-        r#"{"choices":[{"message":{"content":"TRADUÇÃO\nEla olhou.\n\nEQUIVALENTE\nolhou"}}]}"#
+        r#"{"choices":[{"message":{"content":"TRADUÇÃO\nShe looked.\n\nEQUIVALENTE\nlooked"}}]}"#
             .to_string()
     }
 
     #[test]
     fn parses_valid_api_response() {
         let result =
-            parse_api_response(&sample_beginner_response(), "iniciante").expect("should parse");
-        assert_eq!(result, "Ela olhou.\nolhou");
+            parse_api_response(&sample_beginner_response(), "beginner").expect("should parse");
+        assert_eq!(result, "She looked.\nlooked");
     }
 
     #[test]
     fn parses_response_with_extra_whitespace_in_content() {
-        let json =
-            r#"{"choices":[{"message":{"content":"  TRADUÇÃO\n  Olá.\n\nEQUIVALENTE\n  olá  "}}]}"#;
-        let result = parse_api_response(json, "iniciante").expect("should parse");
-        assert_eq!(result, "Olá.\nolá");
+        let json = r#"{"choices":[{"message":{"content":"  TRADUÇÃO\n  Hello.\n\nEQUIVALENTE\n  hello  "}}]}"#;
+        let result = parse_api_response(json, "beginner").expect("should parse");
+        assert_eq!(result, "Hello.\nhello");
     }
 
     #[test]
     fn rejects_empty_choices_array() {
         let json = r#"{"choices":[]}"#;
-        let err = parse_api_response(json, "iniciante").expect_err("should fail");
-        assert!(err.contains("vazia"));
+        let err = parse_api_response(json, "beginner").expect_err("should fail");
+        assert!(err.contains("Empty API response"));
     }
 
     #[test]
     fn rejects_malformed_json() {
         let json = r#"{"choices":[{"message":{"content":null}}]}"#;
-        let err = parse_api_response(json, "iniciante").expect_err("should fail");
+        let err = parse_api_response(json, "beginner").expect_err("should fail");
         assert!(err.contains("invalid type"));
     }
 
     #[test]
     fn rejects_response_without_choices_field() {
         let json = r#"{"not_choices":[]}"#;
-        let err = parse_api_response(json, "iniciante").expect_err("should fail");
+        let err = parse_api_response(json, "beginner").expect_err("should fail");
         assert!(err.contains("missing field"));
     }
 
@@ -266,7 +265,7 @@ mod tests {
     fn decommissioned_model_gives_actionable_message() {
         let body = r#"{"error":{"message":"The model llama3-70b-8192 has been decommissioned.","type":"invalid_request_error","code":"model_decommissioned"}}"#;
         let msg = provider_error_message(reqwest::StatusCode::BAD_REQUEST, body);
-        assert!(msg.contains("desativado"), "got: {msg}");
+        assert!(msg.contains("retired"), "got: {msg}");
         assert!(msg.contains("config.toml"), "got: {msg}");
     }
 
@@ -274,7 +273,7 @@ mod tests {
     fn model_not_found_gives_actionable_message() {
         let body = r#"{"error":{"message":"The model `foo` does not exist.","type":"not_found","code":"model_not_found"}}"#;
         let msg = provider_error_message(reqwest::StatusCode::NOT_FOUND, body);
-        assert!(msg.contains("desativado"), "got: {msg}");
+        assert!(msg.contains("retired"), "got: {msg}");
     }
 
     #[test]
@@ -294,6 +293,6 @@ mod tests {
     #[test]
     fn non_json_error_falls_back_to_status() {
         let msg = provider_error_message(reqwest::StatusCode::BAD_GATEWAY, "<html>oops</html>");
-        assert_eq!(msg, "Erro HTTP: 502 Bad Gateway");
+        assert_eq!(msg, "HTTP error: 502 Bad Gateway");
     }
 }
