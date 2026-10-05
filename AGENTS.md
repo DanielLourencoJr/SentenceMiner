@@ -13,6 +13,11 @@ cd src-tauri && cargo tauri build
 
 # Development with hot-reload webview (dev server on :1420 auto-starts via beforeDevCommand)
 cargo tauri dev
+
+# Global hotkey (portal) in dev: `cargo tauri dev` has no app-id, so the
+# portal refuses to bind. Test the shortcut by launching the debug binary
+# from the app grid (needs
+# ~/.local/share/applications/com.daniel.sentenceminer.desktop installed).
 ```
 
 If `/tmp` is small:
