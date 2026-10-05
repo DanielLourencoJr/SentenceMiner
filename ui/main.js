@@ -15,6 +15,7 @@ const elements = {
   fieldSentence: document.getElementById("field-sentence"),
   fieldTerm: document.getElementById("field-term"),
   fieldBack: document.getElementById("field-back"),
+  frontPreview: document.getElementById("front-preview"),
   btnAdvance: document.getElementById("btn-advance"),
   status: document.getElementById("status"),
 };
@@ -45,6 +46,7 @@ function initializeApp() {
   for (const el of Object.values(fieldElements())) {
     el.addEventListener("keydown", handleFieldKeydown);
   }
+  elements.fieldTerm.addEventListener("input", updateTermPreview);
   elements.btnAdvance.addEventListener("click", () => {
     void advance();
   });
@@ -158,9 +160,11 @@ function showStep(step) {
     elements.fieldSentence.value = state.sentence;
   } else if (step === "term") {
     elements.fieldTerm.value = state.term;
+    updateTermPreview();
   } else if (step === "back") {
     elements.fieldBack.value = state.back;
   }
+  elements.frontPreview.hidden = step !== "term";
 
   renderContext();
   activeField().focus();
@@ -188,6 +192,19 @@ function renderContext() {
     row.appendChild(document.createTextNode(text));
     elements.context.appendChild(row);
   }
+}
+
+// Preview da frente com o preset do usuário, atualizado a cada tecla.
+function updateTermPreview() {
+  const presetTemplate = getPresetTemplate(
+    state.formatPresets,
+    state.defaultPreset
+  );
+  elements.frontPreview.innerHTML = buildFrontPreviewHtml(
+    elements.fieldSentence.value,
+    elements.fieldTerm.value,
+    presetTemplate
+  );
 }
 
 function handleGlobalKeydown(event) {
