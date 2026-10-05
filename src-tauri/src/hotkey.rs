@@ -14,29 +14,28 @@ use ashpd::desktop::{
 use futures_lite::StreamExt;
 
 const SUMMON_SHORTCUT_ID: &str = "summon";
-const SUMMON_TRIGGER: &str = "ctrl+shift+s";
 
-pub fn spawn_summon_shortcut(app: tauri::AppHandle) {
+pub fn spawn_summon_shortcut(app: tauri::AppHandle, trigger: String) {
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = run_hotkey_loop(app).await {
+        if let Err(e) = run_hotkey_loop(app, &trigger).await {
             eprintln!("SentenceMiner: atalho global indisponível ({e}); use o tray.");
         }
     });
 }
 
-async fn run_hotkey_loop(app: tauri::AppHandle) -> Result<(), ashpd::Error> {
+async fn run_hotkey_loop(app: tauri::AppHandle, trigger: &str) -> Result<(), ashpd::Error> {
     let proxy = GlobalShortcuts::new().await?;
     let session = proxy
         .create_session(CreateSessionOptions::default())
         .await?;
 
-    let shortcut = NewShortcut::new(SUMMON_SHORTCUT_ID, "Invocar SentenceMiner")
-        .preferred_trigger(SUMMON_TRIGGER);
+    let shortcut =
+        NewShortcut::new(SUMMON_SHORTCUT_ID, "Invocar SentenceMiner").preferred_trigger(trigger);
     let request = proxy
         .bind_shortcuts(&session, &[shortcut], None, BindShortcutsOptions::default())
         .await?;
     let _bound = request.response()?;
-    eprintln!("SentenceMiner: atalho global ativo ({SUMMON_TRIGGER}).");
+    eprintln!("SentenceMiner: atalho global ativo ({trigger}).");
 
     let mut activated = proxy.receive_activated().await?;
     while let Some(signal) = activated.next().await {

@@ -246,13 +246,15 @@ fn main() {
         }
     };
 
+    let summon_trigger = config.capture.hotkey.clone();
+
     tauri::Builder::default()
         .manage(config)
-        .setup(|app| {
+        .setup(move |app| {
             if let Err(e) = build_tray(app.handle()) {
                 eprintln!("Falha ao criar tray icon: {e}");
             }
-            hotkey::spawn_summon_shortcut(app.handle().clone());
+            hotkey::spawn_summon_shortcut(app.handle().clone(), summon_trigger.clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
