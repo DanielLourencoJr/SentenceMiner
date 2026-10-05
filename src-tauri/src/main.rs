@@ -1,5 +1,5 @@
-mod api;
 mod anki;
+mod api;
 mod capture;
 mod config;
 
@@ -7,7 +7,7 @@ use serde::Serialize;
 
 #[tauri::command]
 async fn capture_selection() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(|| capture::selection::read_primary_selection())
+    tauri::async_runtime::spawn_blocking(capture::selection::read_primary_selection)
         .await
         .map_err(|e| e.to_string())?
 }
@@ -23,9 +23,7 @@ async fn capture_ocr_last_screenshot(
 }
 
 #[tauri::command]
-async fn anki_check_connection(
-    state: tauri::State<'_, config::Config>,
-) -> Result<u16, String> {
+async fn anki_check_connection(state: tauri::State<'_, config::Config>) -> Result<u16, String> {
     let client = anki::client::AnkiClient::new(&state.anki.host, state.anki.port);
     client.check_connection().await
 }
@@ -68,7 +66,10 @@ async fn anki_add_note(
     if fields.is_empty() {
         return Err("Modelo nao tem campos.".to_string());
     }
-    let first = fields.get(0).cloned().unwrap_or_else(|| "Front".to_string());
+    let first = fields
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "Front".to_string());
     let second = fields.get(1).cloned().unwrap_or_else(|| "Back".to_string());
     let mut map = serde_json::Map::new();
     map.insert(first, serde_json::Value::String(front));
@@ -126,12 +127,6 @@ fn set_theme(theme: String, state: tauri::State<'_, config::Config>) -> Result<(
     let mut config = state.inner().clone();
     config.ui.theme = theme;
     config::save(&config)
-}
-
-#[derive(Clone, Serialize)]
-struct CaptureResultPayload {
-    text: Option<String>,
-    error: Option<String>,
 }
 
 fn main() {

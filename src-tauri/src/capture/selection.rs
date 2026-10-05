@@ -20,7 +20,7 @@ pub fn read_primary_selection() -> Result<String, String> {
         if !primary.is_empty() && primary == clipboard_text {
             return Ok(String::new());
         }
-        return Ok(primary);
+        Ok(primary)
     }
 
     #[cfg(not(target_os = "linux"))]

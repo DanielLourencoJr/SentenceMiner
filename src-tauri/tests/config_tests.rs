@@ -100,7 +100,10 @@ mod config_tests {
     #[test]
     fn default_format_preset_sublinhado_uses_u_tag() {
         let config = Config::default();
-        let preset = config.format_presets.iter().find(|p| p.name == "sublinhado");
+        let preset = config
+            .format_presets
+            .iter()
+            .find(|p| p.name == "sublinhado");
         assert!(preset.is_some());
         assert!(preset.unwrap().template.contains("<u>"));
     }
@@ -111,7 +114,10 @@ mod config_tests {
         let serialized = toml::to_string_pretty(&original).expect("serialize");
         let deserialized: Config = toml::from_str(&serialized).expect("deserialize");
 
-        assert_eq!(original.general.source_language, deserialized.general.source_language);
+        assert_eq!(
+            original.general.source_language,
+            deserialized.general.source_language
+        );
         assert_eq!(original.anki.host, deserialized.anki.host);
         assert_eq!(original.anki.port, deserialized.anki.port);
         assert_eq!(original.ui.default_model, deserialized.ui.default_model);
@@ -128,7 +134,7 @@ mod config_tests {
     fn anki_port_is_valid() {
         let config = Config::default();
         assert!(config.anki.port > 0);
-        assert!(config.anki.port <= 65535);
+        assert_eq!(config.anki.port, 8765);
     }
 
     // ─── Filesystem integration tests ─────────────────────────────────
@@ -158,7 +164,10 @@ mod config_tests {
             assert_eq!(config.general.source_language, "English");
 
             let config_path = std::env::var("HOME").unwrap() + "/.config/sentenceminer/config.toml";
-            assert!(std::path::Path::new(&config_path).exists(), "config file should be created");
+            assert!(
+                std::path::Path::new(&config_path).exists(),
+                "config file should be created"
+            );
         });
     }
 
@@ -224,7 +233,10 @@ theme = "dark"
             config::save(&original).expect("save");
 
             let loaded = config::load_or_create().expect("load");
-            assert_eq!(loaded.general.source_language, original.general.source_language);
+            assert_eq!(
+                loaded.general.source_language,
+                original.general.source_language
+            );
             assert_eq!(loaded.api.base_url, original.api.base_url);
             assert_eq!(loaded.anki.deck, original.anki.deck);
         });

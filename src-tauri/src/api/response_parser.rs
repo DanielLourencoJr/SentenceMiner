@@ -10,7 +10,10 @@ pub fn parse_and_normalize_back(card_model: &str, content: &str) -> Result<Strin
     Ok(format_sections(&sections))
 }
 
-fn parse_sections(content: &str, expected_sections: &[&str]) -> Result<Vec<(String, String)>, String> {
+fn parse_sections(
+    content: &str,
+    expected_sections: &[&str],
+) -> Result<Vec<(String, String)>, String> {
     let lines: Vec<&str> = content.lines().collect();
     let mut idx = 0usize;
     let mut parsed = Vec::with_capacity(expected_sections.len());
@@ -18,9 +21,9 @@ fn parse_sections(content: &str, expected_sections: &[&str]) -> Result<Vec<(Stri
     for (section_index, heading) in expected_sections.iter().enumerate() {
         skip_blank_lines(&lines, &mut idx);
 
-        let line = lines
-            .get(idx)
-            .ok_or_else(|| format!("Resposta fora do formato esperado: faltando seção {heading}."))?;
+        let line = lines.get(idx).ok_or_else(|| {
+            format!("Resposta fora do formato esperado: faltando seção {heading}.")
+        })?;
         if line.trim() != *heading {
             return Err(format!(
                 "Resposta fora do formato esperado: seção {heading} ausente ou fora de ordem."
@@ -128,8 +131,8 @@ mod tests {
     fn collect_content_until_next_heading() {
         let lines = &["first line", "second line", "NEXT", "trailing"];
         let mut idx = 0;
-        let content = collect_section_content(lines, &mut idx, Some("NEXT"))
-            .expect("should collect");
+        let content =
+            collect_section_content(lines, &mut idx, Some("NEXT")).expect("should collect");
         assert_eq!(content, "first line\nsecond line");
         assert_eq!(idx, 2);
     }
@@ -138,8 +141,7 @@ mod tests {
     fn collect_content_until_eof_when_no_next() {
         let lines = &["line a", "line b"];
         let mut idx = 0;
-        let content = collect_section_content(lines, &mut idx, None)
-            .expect("should collect");
+        let content = collect_section_content(lines, &mut idx, None).expect("should collect");
         assert_eq!(content, "line a\nline b");
         assert_eq!(idx, 2);
     }
@@ -148,8 +150,7 @@ mod tests {
     fn collect_content_trims_outer_whitespace() {
         let lines = &["  hello  ", "  world  "];
         let mut idx = 0;
-        let content = collect_section_content(lines, &mut idx, None)
-            .expect("should collect");
+        let content = collect_section_content(lines, &mut idx, None).expect("should collect");
         assert_eq!(content, "hello  \n  world");
     }
 
@@ -157,8 +158,7 @@ mod tests {
     fn collect_rejects_empty_content() {
         let lines = &["HEADER"];
         let mut idx = 1;
-        let err = collect_section_content(lines, &mut idx, None)
-            .expect_err("should reject empty");
+        let err = collect_section_content(lines, &mut idx, None).expect_err("should reject empty");
         assert!(err.contains("seção vazia"));
     }
 
@@ -166,8 +166,8 @@ mod tests {
     fn collect_content_stops_at_exact_heading_match() {
         let lines = &["some text", "STOP", "more text"];
         let mut idx = 0;
-        let content = collect_section_content(lines, &mut idx, Some("STOP"))
-            .expect("should collect");
+        let content =
+            collect_section_content(lines, &mut idx, Some("STOP")).expect("should collect");
         assert_eq!(content, "some text");
         assert_eq!(idx, 1);
     }
@@ -176,8 +176,8 @@ mod tests {
     fn collect_content_ignores_heading_in_middle_of_line() {
         let lines = &["this line has STOP in it", "not actually a heading"];
         let mut idx = 0;
-        let content = collect_section_content(lines, &mut idx, Some("STOP"))
-            .expect("should collect");
+        let content =
+            collect_section_content(lines, &mut idx, Some("STOP")).expect("should collect");
         assert_eq!(content, "this line has STOP in it\nnot actually a heading");
     }
 
@@ -194,9 +194,7 @@ mod tests {
 
     #[test]
     fn format_trims_section_contents() {
-        let sections = vec![
-            ("A".to_string(), "  hello  ".to_string()),
-        ];
+        let sections = vec![("A".to_string(), "  hello  ".to_string())];
         assert_eq!(format_sections(&sections), "hello");
     }
 
@@ -208,9 +206,7 @@ mod tests {
 
     #[test]
     fn format_with_single_section() {
-        let sections = vec![
-            ("X".to_string(), "only one".to_string()),
-        ];
+        let sections = vec![("X".to_string(), "only one".to_string())];
         assert_eq!(format_sections(&sections), "only one");
     }
 
@@ -270,10 +266,7 @@ mod tests {
         )
         .expect("response should parse");
 
-        assert_eq!(
-            parsed,
-            "Difícil de entender.\nenigmatic, unreadable"
-        );
+        assert_eq!(parsed, "Difícil de entender.\nenigmatic, unreadable");
     }
 
     #[test]
@@ -327,8 +320,7 @@ mod tests {
 
     #[test]
     fn rejects_invalid_card_model() {
-        let err = parse_and_normalize_back("invalid", "anything")
-            .expect_err("should fail");
+        let err = parse_and_normalize_back("invalid", "anything").expect_err("should fail");
 
         assert_eq!(err, "Modelo invalido.");
     }
