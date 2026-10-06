@@ -42,9 +42,6 @@ initializeApp();
 
 function initializeApp() {
   document.addEventListener("keydown", handleGlobalKeydown);
-  for (const el of Object.values(fieldElements())) {
-    el.addEventListener("keydown", handleFieldKeydown);
-  }
   elements.fieldTerm.addEventListener("input", updateFrontPreview);
   elements.btnAdvance.addEventListener("click", () => {
     void advance();
@@ -137,7 +134,13 @@ async function captureIntoSentence() {
     }
     state.sentence = text;
     elements.fieldSentence.value = text;
-    elements.fieldSentence.select();
+    // No auto-select: cursor goes to the end, so typing (or Enter)
+    // appends instead of replacing everything.
+    elements.fieldSentence.focus();
+    elements.fieldSentence.setSelectionRange(
+      elements.fieldSentence.value.length,
+      elements.fieldSentence.value.length
+    );
     setStatus(elements.status, "Review the sentence, then advance.");
   } catch (err) {
     setStatus(elements.status, String(err));
@@ -178,11 +181,9 @@ function updateFrontPreview() {
     state.defaultPreset
   );
   const term = state.step === "term" ? elements.fieldTerm.value : state.term;
-  elements.frontPreview.innerHTML = buildFrontPreviewHtml(
-    state.sentence,
-    term,
-    presetTemplate
-  );
+  const html = buildFrontPreviewHtml(state.sentence, term, presetTemplate);
+  elements.frontPreview.innerHTML =
+    `<span class="front-tag">Front:</span> ${html}`;
 }
 
 function handleGlobalKeydown(event) {
@@ -203,16 +204,6 @@ function handleGlobalKeydown(event) {
 
 function isFieldFocused() {
   return Object.values(fieldElements()).some((el) => el === document.activeElement);
-}
-
-function handleFieldKeydown(event) {
-  // In the single-line input (term), Enter advances — no line break possible.
-  if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
-    if (document.activeElement === elements.fieldTerm) {
-      event.preventDefault();
-      void advance();
-    }
-  }
 }
 
 async function advance() {
