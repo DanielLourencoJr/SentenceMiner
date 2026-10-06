@@ -248,6 +248,9 @@ async function suggestTerm() {
     });
     if (suggestion && !elements.fieldTerm.value && state.step === "term") {
       elements.fieldTerm.value = suggestion;
+      // Selected: one keystroke replaces it with the right term.
+      elements.fieldTerm.focus();
+      elements.fieldTerm.select();
       updateFrontPreview();
       setStatus(elements.status, "Suggested term — edit if wrong.");
     }
