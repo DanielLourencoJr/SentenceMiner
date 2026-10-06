@@ -3,6 +3,7 @@ mod api;
 mod capture;
 mod config;
 mod hotkey;
+mod infer;
 
 use serde::Serialize;
 use tauri::{
@@ -204,6 +205,11 @@ async fn generate_back(
 }
 
 #[tauri::command]
+fn infer_term(sentence: String) -> String {
+    infer::infer_term(&sentence)
+}
+
+#[tauri::command]
 fn dismiss(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
@@ -268,7 +274,8 @@ fn main() {
             generate_back,
             get_ui_bootstrap,
             set_theme,
-            dismiss
+            dismiss,
+            infer_term
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));
