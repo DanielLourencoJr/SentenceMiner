@@ -8,7 +8,9 @@
 //! inflected forms may not match their base form (documented limitation,
 //! to be improved by the Anki-vocabulary layer).
 
-use std::collections::HashMap;
+pub mod vocab;
+
+use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
 // Ranked word list, most common first. Source: google-10000-english
@@ -211,12 +213,21 @@ fn eligible(key: &str, surface: &str, is_first_token: bool) -> bool {
 }
 
 /// Suggest the rarest eligible word, in surface form.
-/// Returns an empty string when nothing qualifies.
+/// Words already in the Anki vocabulary cache are skipped; without a
+/// cache this degrades to rarity-only scoring. Empty when nothing
+/// qualifies.
 pub fn infer_term(sentence: &str) -> String {
+    infer_term_with_vocab(sentence, &vocab::load_known_words())
+}
+
+pub fn infer_term_with_vocab(sentence: &str, known: &HashSet<String>) -> String {
     let table = rank_table();
     let mut best: Option<ScoredToken> = None;
 
     for (position, (key, surface)) in tokenize(sentence).iter().enumerate() {
+        if known.contains(key) {
+            continue;
+        }
         if !eligible(key, surface, position == 0) {
             continue;
         }
@@ -298,6 +309,38 @@ mod tests {
     fn returns_surface_form() {
         // Capitalized sentence-initial word keeps its surface casing.
         assert_eq!(infer_term("Breathtaking views everywhere."), "Breathtaking");
+    }
+
+    #[test]
+    fn known_words_are_skipped() {
+        let known: HashSet<String> = ["inscrutable".to_string()].into_iter().collect();
+        // "inscrutable" would win on rarity, but it is already mined.
+        // Next rarest: "expression" (also past the list? no — ranked).
+        let result =
+            infer_term_with_vocab("She looked at him with an inscrutable expression.", &known);
+        assert_ne!(result, "inscrutable");
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn all_known_yields_nothing() {
+        let known: HashSet<String> = [
+            "she",
+            "looked",
+            "at",
+            "him",
+            "with",
+            "an",
+            "inscrutable",
+            "expression",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
+        assert_eq!(
+            infer_term_with_vocab("She looked at him with an inscrutable expression.", &known),
+            ""
+        );
     }
 
     #[test]
