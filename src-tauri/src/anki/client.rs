@@ -71,6 +71,50 @@ impl AnkiClient {
             .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
     }
 
+    pub async fn find_notes(&self, query: &str) -> Result<Vec<i64>, String> {
+        #[derive(Serialize)]
+        struct FindNotesParams {
+            query: String,
+        }
+        let req = AnkiRequest {
+            action: "findNotes".to_string(),
+            version: 6,
+            params: Some(FindNotesParams {
+                query: query.to_string(),
+            }),
+        };
+        let resp: AnkiResponse<Vec<i64>> = self.post(req).await?;
+        resp.result
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))
+    }
+
+    pub async fn notes_info(&self, ids: &[i64]) -> Result<Vec<NoteInfo>, String> {
+        #[derive(Serialize)]
+        struct NotesInfoParams {
+            notes: Vec<i64>,
+        }
+        let req = AnkiRequest {
+            action: "notesInfo".to_string(),
+            version: 6,
+            params: Some(NotesInfoParams {
+                notes: ids.to_vec(),
+            }),
+        };
+        let resp: AnkiResponse<Vec<NoteInfoRaw>> = self.post(req).await?;
+        Ok(resp
+            .result
+            .ok_or_else(|| resp.error.unwrap_or("AnkiConnect error.".to_string()))?
+            .into_iter()
+            .map(|raw| NoteInfo {
+                fields: raw
+                    .fields
+                    .into_iter()
+                    .map(|(name, field)| (name, field.value))
+                    .collect(),
+            })
+            .collect())
+    }
+
     pub async fn add_note(
         &self,
         deck: &str,
@@ -123,6 +167,21 @@ struct AnkiRequest<T: Serialize> {
 struct AnkiResponse<T> {
     result: Option<T>,
     error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct NoteInfo {
+    pub fields: std::collections::HashMap<String, String>,
+}
+
+#[derive(Deserialize)]
+struct NoteInfoRaw {
+    fields: std::collections::HashMap<String, NoteFieldRaw>,
+}
+
+#[derive(Deserialize)]
+struct NoteFieldRaw {
+    value: String,
 }
 
 #[derive(Serialize)]

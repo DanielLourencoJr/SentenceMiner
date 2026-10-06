@@ -3,6 +3,7 @@ mod api;
 mod capture;
 mod config;
 mod hotkey;
+mod infer;
 
 use serde::Serialize;
 use tauri::{
@@ -173,12 +174,15 @@ async fn anki_add_note(
         .unwrap_or_else(|| "Front".to_string());
     let second = fields.get(1).cloned().unwrap_or_else(|| "Back".to_string());
     let mut map = serde_json::Map::new();
-    map.insert(first, serde_json::Value::String(front));
-    map.insert(second, serde_json::Value::String(back));
+    map.insert(first, serde_json::Value::String(front.clone()));
+    map.insert(second, serde_json::Value::String(back.clone()));
     let deck_name = deck.unwrap_or_else(|| state.anki.deck.clone());
-    client
+    let note_id = client
         .add_note(&deck_name, &model, map, &state.anki.tags)
-        .await
+        .await?;
+    // The just-mined words count as known from now on.
+    crate::infer::vocab::remember_texts(&[&front, &back]);
+    Ok(note_id)
 }
 
 #[tauri::command]
@@ -201,6 +205,11 @@ async fn generate_back(
         cfg.api.timeout_seconds,
     )
     .await
+}
+
+#[tauri::command]
+fn infer_term(sentence: String) -> String {
+    infer::infer_term(&sentence)
 }
 
 #[tauri::command]
@@ -248,6 +257,23 @@ fn main() {
 
     let summon_trigger = config.capture.hotkey.clone();
 
+    // Best-effort vocabulary refresh in the background; silent when
+    // Anki is closed. Inference only ever reads the cache file.
+    {
+        let (host, port, deck) = (
+            config.anki.host.clone(),
+            config.anki.port,
+            config.anki.deck.clone(),
+        );
+        tauri::async_runtime::spawn(async move {
+            match crate::infer::vocab::refresh_if_stale(&host, port, &deck).await {
+                Ok(0) => {}
+                Ok(n) => eprintln!("SentenceMiner: vocabulary cache refreshed ({n} words)."),
+                Err(_) => {}
+            }
+        });
+    }
+
     tauri::Builder::default()
         .manage(config)
         .setup(move |app| {
@@ -268,7 +294,8 @@ fn main() {
             generate_back,
             get_ui_bootstrap,
             set_theme,
-            dismiss
+            dismiss,
+            infer_term
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));

@@ -219,6 +219,7 @@ async function advance() {
     }
     state.sentence = value;
     showStep(nextStep("sentence"));
+    void suggestTerm();
   } else if (state.step === "term") {
     const value = elements.fieldTerm.value.trim();
     if (!value) {
@@ -235,6 +236,26 @@ async function advance() {
     }
     state.back = value;
     await sendToAnki();
+  }
+}
+
+// Best-effort term suggestion: fills the field only if the user has
+// not typed anything yet and the backend found a candidate.
+async function suggestTerm() {
+  try {
+    const suggestion = await invokeCommand("infer_term", {
+      sentence: state.sentence,
+    });
+    if (suggestion && !elements.fieldTerm.value && state.step === "term") {
+      elements.fieldTerm.value = suggestion;
+      // Selected: one keystroke replaces it with the right term.
+      elements.fieldTerm.focus();
+      elements.fieldTerm.select();
+      updateFrontPreview();
+      setStatus(elements.status, "Suggested term — edit if wrong.");
+    }
+  } catch {
+    // Silent: the field simply stays manual.
   }
 }
 
