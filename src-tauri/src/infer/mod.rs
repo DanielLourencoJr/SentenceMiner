@@ -267,17 +267,23 @@ pub fn infer_term_with_vocab(sentence: &str, known: &HashSet<String>) -> String 
 mod tests {
     use super::*;
 
+    // Hermetic helper: layer-1 tests must not read the machine's real
+    // vocabulary cache (a deck containing "cat" would flip expectations).
+    fn suggest(sentence: &str) -> String {
+        infer_term_with_vocab(sentence, &HashSet::new())
+    }
+
     #[test]
     fn picks_rarest_word() {
         assert_eq!(
-            infer_term("She looked at him with an inscrutable expression."),
+            suggest("She looked at him with an inscrutable expression."),
             "inscrutable"
         );
     }
 
     #[test]
     fn ignores_stopwords_and_common_words() {
-        assert_eq!(infer_term("The cat sat on the mat."), "mat");
+        assert_eq!(suggest("The cat sat on the mat."), "mat");
     }
 
     #[test]
@@ -285,7 +291,7 @@ mod tests {
         // "Paris" is capitalized mid-sentence: skipped, the unknown
         // "breathtaking" (past the whole list) wins.
         assert_eq!(
-            infer_term("I visited Paris and it was breathtaking."),
+            suggest("I visited Paris and it was breathtaking."),
             "breathtaking"
         );
     }
@@ -293,7 +299,7 @@ mod tests {
     #[test]
     fn skips_numbers_and_acronyms() {
         assert_eq!(
-            infer_term("In 2024 the NASA report was mindblowing."),
+            suggest("In 2024 the NASA report was mindblowing."),
             "mindblowing"
         );
     }
@@ -301,14 +307,14 @@ mod tests {
     #[test]
     fn skips_contractions() {
         // "don't" must not surface as "don".
-        let result = infer_term("I don't understand this word: floccinaucinihilipilification.");
+        let result = suggest("I don't understand this word: floccinaucinihilipilification.");
         assert_eq!(result, "floccinaucinihilipilification");
     }
 
     #[test]
     fn returns_surface_form() {
         // Capitalized sentence-initial word keeps its surface casing.
-        assert_eq!(infer_term("Breathtaking views everywhere."), "Breathtaking");
+        assert_eq!(suggest("Breathtaking views everywhere."), "Breathtaking");
     }
 
     #[test]
@@ -345,9 +351,9 @@ mod tests {
 
     #[test]
     fn empty_and_common_only_yield_nothing() {
-        assert_eq!(infer_term(""), "");
-        assert_eq!(infer_term("   "), "");
-        assert_eq!(infer_term("I am."), "");
+        assert_eq!(suggest(""), "");
+        assert_eq!(suggest("   "), "");
+        assert_eq!(suggest("I am."), "");
     }
 
     #[test]

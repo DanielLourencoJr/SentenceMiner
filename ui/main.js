@@ -116,7 +116,31 @@ async function onSummon() {
   state.back = "";
   elements.dim.hidden = false;
   showStep("sentence");
+  // Fresh Anki lists every summon: the startup ones go stale when Anki
+  // was closed at boot. Silent on failure (backend errors at send time).
+  void refreshAnkiLists();
   await captureIntoSentence();
+}
+
+async function refreshAnkiLists() {
+  try {
+    const models = await invokeCommand("anki_get_model_names");
+    if (models.length > 0) {
+      state.noteType = models[0];
+    }
+  } catch {
+    // keep previous value
+  }
+  try {
+    const decks = await invokeCommand("anki_get_deck_names");
+    if (state.defaultDeck && decks.includes(state.defaultDeck)) {
+      // keep the default
+    } else if (decks.length > 0) {
+      state.defaultDeck = decks[0];
+    }
+  } catch {
+    // keep previous value
+  }
 }
 
 async function captureIntoSentence() {
