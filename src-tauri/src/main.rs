@@ -164,6 +164,17 @@ async fn anki_add_note(
     deck: Option<String>,
 ) -> Result<i64, String> {
     let client = anki::client::AnkiClient::new(&state.anki.host, state.anki.port);
+    // Revalidate fresh: the wizard may have loaded its lists while Anki
+    // was closed, leaving hardcoded fallbacks behind.
+    let models = client.get_model_names().await?;
+    if !models.iter().any(|m| m == &model) {
+        return Err(unknown_name_error("Note type", &model, &models));
+    }
+    let decks = client.get_deck_names().await?;
+    let deck_name = deck.clone().unwrap_or_else(|| state.anki.deck.clone());
+    if deck_name.is_empty() || !decks.iter().any(|d| d == &deck_name) {
+        return Err(unknown_name_error("Deck", &deck_name, &decks));
+    }
     let fields = client.get_model_field_names(&model).await?;
     if fields.is_empty() {
         return Err("Model has no fields.".to_string());
@@ -176,7 +187,6 @@ async fn anki_add_note(
     let mut map = serde_json::Map::new();
     map.insert(first, serde_json::Value::String(front.clone()));
     map.insert(second, serde_json::Value::String(back.clone()));
-    let deck_name = deck.unwrap_or_else(|| state.anki.deck.clone());
     let note_id = client
         .add_note(&deck_name, &model, map, &state.anki.tags)
         .await?;
@@ -217,6 +227,18 @@ fn dismiss(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
     }
+}
+
+fn unknown_name_error(kind: &str, requested: &str, available: &[String]) -> String {
+    if requested.is_empty() || available.is_empty() {
+        return format!(
+            "{kind} '{requested}' not found in Anki. Is Anki open with the right profile?"
+        );
+    }
+    format!(
+        "{kind} '{requested}' not found in Anki (available: {}).",
+        available.join(", ")
+    )
 }
 
 #[derive(Serialize)]
@@ -299,4 +321,33 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri error: {e}"));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_model_lists_available_types() {
+        let msg = unknown_name_error(
+            "Note type",
+            "Basic",
+            &["Básico".to_string(), "Cloze".to_string()],
+        );
+        assert!(msg.contains("Note type 'Basic' not found"));
+        assert!(msg.contains("Básico, Cloze"));
+    }
+
+    #[test]
+    fn unknown_deck_points_to_anki_profile() {
+        let msg = unknown_name_error("Deck", "Missing", &[]);
+        assert!(msg.contains("Deck 'Missing' not found"));
+        assert!(msg.contains("Is Anki open"));
+    }
+
+    #[test]
+    fn empty_request_names_anki_not_types() {
+        let msg = unknown_name_error("Deck", "", &["Inglês".to_string()]);
+        assert!(msg.contains("Is Anki open"));
+    }
 }
