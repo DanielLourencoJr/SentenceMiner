@@ -3,6 +3,7 @@ import {
   STEPS,
   isStep,
   nextStep,
+  resolveSentence,
   stepAction,
   stepIndex,
   stepMeta,
@@ -49,5 +50,24 @@ describe("wizard steps", () => {
     expect(stepAction("sentence")).toBe("Next");
     expect(stepAction("term")).toBe("Generate back");
     expect(stepAction("back")).toBe("Send to Anki");
+  });
+
+  it("ignores our own suggested term on re-summon", () => {
+    // PRIMARY still holds the auto-selected suggestion: keep working
+    // on the previous sentence instead of adopting our own term.
+    expect(resolveSentence("inscrutable", "inscrutable", "She looked.")).toBe(
+      "She looked."
+    );
+  });
+
+  it("adopts genuinely new selections", () => {
+    expect(resolveSentence("New text.", "inscrutable", "She looked.")).toBe(
+      "New text."
+    );
+  });
+
+  it("falls back to the previous sentence when empty", () => {
+    expect(resolveSentence("", "inscrutable", "She looked.")).toBe("She looked.");
+    expect(resolveSentence("", "", "")).toBe("");
   });
 });

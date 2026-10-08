@@ -408,6 +408,9 @@ body.summon-body,
   border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 22px 24px 16px;
+  /* Only fields are selectable: mouse drags elsewhere must not
+     steal the PRIMARY selection. */
+  user-select: none;
 }
 
 .summon-field {
@@ -415,6 +418,7 @@ body.summon-body,
   box-sizing: border-box;
   margin-top: 8px;
   font-size: 1rem;
+  user-select: text;
 }
 
 .summon-field[hidden] {
