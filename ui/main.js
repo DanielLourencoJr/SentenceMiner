@@ -239,17 +239,14 @@ function handleGlobalKeydown(event) {
     return;
   }
 
-  // Ctrl+Enter advances from any field, including multiline ones.
+  // Ctrl+Enter advances from anywhere in the dialog, focused field or
+  // not: a fullscreen modal owns every keystroke while visible.
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-    if (!elements.dim.hidden && isFieldFocused()) {
+    if (!elements.dim.hidden) {
       event.preventDefault();
       void advance();
     }
   }
-}
-
-function isFieldFocused() {
-  return Object.values(fieldElements()).some((el) => el === document.activeElement);
 }
 
 async function advance() {
