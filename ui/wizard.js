@@ -50,3 +50,18 @@ export function usesTextarea(step) {
 export function stepAction(step) {
   return ACTIONS[step] ?? "Next";
 }
+
+// Decide which sentence a fresh summon should use. If the capture
+// matches the term WE suggested last time, it is our own PRIMARY
+// pollution (auto-selected suggestion), not a new user selection:
+// keep the previous sentence instead. Empty captures also fall back
+// to it, so an accidental summon never wipes the working sentence.
+export function resolveSentence(fresh, lastSuggestion, previousSentence) {
+  if (!fresh) {
+    return previousSentence;
+  }
+  if (lastSuggestion && fresh === lastSuggestion) {
+    return previousSentence;
+  }
+  return fresh;
+}

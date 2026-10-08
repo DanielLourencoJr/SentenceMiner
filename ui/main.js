@@ -5,7 +5,7 @@ import {
 } from "./card.js";
 import { hasTauri, invokeCommand, listenEvent } from "./tauri-api.js";
 import { setStatus } from "./ui-state.js";
-import { nextStep, stepAction, stepMeta } from "./wizard.js";
+import { nextStep, resolveSentence, stepAction, stepMeta } from "./wizard.js";
 
 const elements = {
   dim: document.getElementById("dim"),
@@ -30,6 +30,9 @@ const state = {
   sentence: "",
   term: "",
   back: "",
+  // Term WE suggested last time: used to recognize our own PRIMARY
+  // pollution on the next summon (see resolveSentence).
+  lastSuggestion: "",
   formatPresets: [],
   defaultDeck: "",
   defaultModel: "intermediate",
@@ -111,15 +114,36 @@ function applyTheme(theme) {
 
 async function onSummon() {
   state.step = "idle";
-  state.sentence = "";
   state.term = "";
   state.back = "";
   elements.dim.hidden = false;
-  showStep("sentence");
   // Fresh Anki lists every summon: the startup ones go stale when Anki
   // was closed at boot. Silent on failure (backend errors at send time).
   void refreshAnkiLists();
-  await captureIntoSentence();
+  const fresh = await captureSelectionText();
+  // Ignore our own PRIMARY pollution (see resolveSentence), then clear
+  // the marker so a later summon judges against its own suggestion.
+  state.sentence = resolveSentence(fresh, state.lastSuggestion, state.sentence);
+  state.lastSuggestion = "";
+  showStep("sentence");
+  if (!state.sentence) {
+    setStatus(
+      elements.status,
+      "No selection detected. Select the text and press Ctrl+Enter to retry."
+    );
+    elements.fieldSentence.focus();
+    return;
+  }
+  setStatus(elements.status, "Review the sentence, then advance.");
+}
+
+async function captureSelectionText() {
+  try {
+    return await invokeCommand("capture_selection");
+  } catch (err) {
+    setStatus(elements.status, String(err));
+    return "";
+  }
 }
 
 async function refreshAnkiLists() {
@@ -145,30 +169,28 @@ async function refreshAnkiLists() {
 
 async function captureIntoSentence() {
   setStatus(elements.status, "Capturing selection...");
-  try {
-    const text = await invokeCommand("capture_selection");
-    if (!text) {
-      elements.fieldSentence.value = "";
-      setStatus(
-        elements.status,
-        "No selection detected. Select the text and press Ctrl+Enter to retry."
-      );
-      elements.fieldSentence.focus();
-      return;
-    }
-    state.sentence = text;
-    elements.fieldSentence.value = text;
-    // No auto-select: cursor goes to the end, so typing (or Enter)
-    // appends instead of replacing everything.
-    elements.fieldSentence.focus();
-    elements.fieldSentence.setSelectionRange(
-      elements.fieldSentence.value.length,
-      elements.fieldSentence.value.length
+  const fresh = await captureSelectionText();
+  if (!fresh) {
+    elements.fieldSentence.value = "";
+    setStatus(
+      elements.status,
+      "No selection detected. Select the text and press Ctrl+Enter to retry."
     );
-    setStatus(elements.status, "Review the sentence, then advance.");
-  } catch (err) {
-    setStatus(elements.status, String(err));
+    elements.fieldSentence.focus();
+    return;
   }
+  // Same pollution rule as a fresh summon: our own suggested term
+  // never counts as a new sentence.
+  state.sentence = resolveSentence(fresh, state.lastSuggestion, state.sentence);
+  elements.fieldSentence.value = state.sentence;
+  // No auto-select: cursor goes to the end, so typing (or Enter)
+  // appends instead of replacing everything.
+  elements.fieldSentence.focus();
+  elements.fieldSentence.setSelectionRange(
+    elements.fieldSentence.value.length,
+    elements.fieldSentence.value.length
+  );
+  setStatus(elements.status, "Review the sentence, then advance.");
 }
 
 function showStep(step) {
@@ -273,6 +295,9 @@ async function suggestTerm() {
     if (suggestion && !elements.fieldTerm.value && state.step === "term") {
       elements.fieldTerm.value = suggestion;
       // Selected: one keystroke replaces it with the right term.
+      // Recorded: selecting it claims PRIMARY, so the next summon
+      // knows to ignore it (see resolveSentence).
+      state.lastSuggestion = suggestion;
       elements.fieldTerm.focus();
       elements.fieldTerm.select();
       updateFrontPreview();
